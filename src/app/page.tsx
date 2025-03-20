@@ -1,3 +1,4 @@
+import { Hero } from "@/components/ui/animated-hero";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, LineChart, PieChart } from "lucide-react";
@@ -43,16 +44,7 @@ export default function Home() {
         <section className=" h-[45rem] w-full py-12 md:py-24 lg:py-32 bg-muted flex items-center justify-center">
           <div className="container px-4 md:px-6">
             <div className="flex flex-col items-center justify-center space-y-4 text-center">
-              <div className="space-y-2">
-                <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">
-                  Plateforme d'analyse des pandémies historiques
-                </h1>
-                <p className="mx-auto max-w-[700px] text-muted-foreground md:text-xl">
-                  Collectez, analysez et visualisez les données historiques sur
-                  les pandémies pour mieux comprendre et prédire les événements
-                  futurs.
-                </p>
-              </div>
+              <Hero />
               <div className="space-x-4">
                 <Link href="/dashboard">
                   <Button>Explorer les données</Button>
@@ -118,7 +110,7 @@ export default function Home() {
       </main>
       <footer className="flex flex-col gap-2 sm:flex-row py-6 w-full border-t px-4 md:px-6">
         <p className="text-xs text-muted-foreground">
-          © 2025 PandemicInsight. Tous droits réservés.
+          © 2025 EPIVIZ. Tous droits réservés.
         </p>
         <nav className="sm:ml-auto flex gap-4 sm:gap-6">
           <Link className="text-xs hover:underline underline-offset-4" href="#">
