@@ -1,5 +1,6 @@
 "use client";
 
+import HeaderComponent from "@/components/layout/HeaderComponent";
 import { PandemicChart } from "@/components/pandemic-chart";
 import { PandemicMap } from "@/components/pandemic-map";
 import { PandemicStats } from "@/components/pandemic-stats";
@@ -14,7 +15,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import Link from "next/link";
 import { useState } from "react";
 
 export default function DashboardPage() {
@@ -23,40 +23,8 @@ export default function DashboardPage() {
 
   return (
     <div className="flex min-h-screen w-full flex-col">
-      <header className="header px-4 lg:px-6 h-16 flex items-center border-b bg-white shadow-md">
-        <Link className="flex items-center justify-center" href="/">
-          <div className="text-[30px] text-transparent bg-clip-text bg-gradient-to-r from-[#98ff87] to-[#3d96ff] font-poppins font-[700] flex flex-row items-center justify-center gap-1">
-            EPIVIZ .
-          </div>
-        </Link>
-        <nav className="ml-auto flex gap-4 sm:gap-6">
-          <Link
-            className="relative text-sm font-poppins font-bold text-[#6b6b6b] transition-colors duration-300 ease-in-out hover:text-transparent hover:bg-clip-text hover:bg-gradient-to-r from-[#98ff87] to-[#3d96ff]"
-            href="/"
-          >
-            Accueil
-          </Link>
-          <Link
-            className="relative text-sm font-poppins font-bold text-[#6b6b6b] transition-colors duration-300 ease-in-out hover:text-transparent hover:bg-clip-text hover:bg-gradient-to-r from-red-500 to-purple-900"
-            href="/dashboard"
-          >
-            Tableau de bord
-          </Link>
-          <Link
-            className="relative text-sm font-poppins font-bold text-[#6b6b6b] transition-colors duration-300 ease-in-out hover:text-transparent hover:bg-clip-text hover:bg-gradient-to-r from-red-500 to-purple-900"
-            href="/api-docs"
-          >
-            API
-          </Link>
-          <Link
-            className="relative text-sm font-poppins font-bold text-[#6b6b6b] transition-colors duration-300 ease-in-out hover:text-transparent hover:bg-clip-text hover:bg-gradient-to-r from-red-500 to-purple-900"
-            href="/about"
-          >
-            À propos
-          </Link>
-        </nav>
-      </header>
-      <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
+      <HeaderComponent />
+      <main className="mt-[5rem] flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
         <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">

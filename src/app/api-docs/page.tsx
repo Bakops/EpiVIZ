@@ -1,3 +1,4 @@
+import HeaderComponent from "@/components/layout/HeaderComponent";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -7,45 +8,12 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import Link from "next/link";
 
 export default function ApiDocsPage() {
   return (
     <div className="flex min-h-screen w-full flex-col">
-      <header className="header px-4 lg:px-6 h-16 flex items-center border-b bg-white shadow-md">
-        <Link className="flex items-center justify-center" href="/">
-          <div className="text-[30px] text-transparent bg-clip-text bg-gradient-to-r from-[#98ff87] to-[#3d96ff] font-poppins font-[700] flex flex-row items-center justify-center gap-1">
-            EPIVIZ .
-          </div>
-        </Link>
-        <nav className="ml-auto flex gap-4 sm:gap-6">
-          <Link
-            className="relative text-sm font-poppins font-bold text-[#6b6b6b] transition-colors duration-300 ease-in-out hover:text-transparent hover:bg-clip-text hover:bg-gradient-to-r from-[#98ff87] to-[#3d96ff]"
-            href="/"
-          >
-            Accueil
-          </Link>
-          <Link
-            className="relative text-sm font-poppins font-bold text-[#6b6b6b] transition-colors duration-300 ease-in-out hover:text-transparent hover:bg-clip-text hover:bg-gradient-to-r from-red-500 to-purple-900"
-            href="/dashboard"
-          >
-            Tableau de bord
-          </Link>
-          <Link
-            className="relative text-sm font-poppins font-bold text-[#6b6b6b] transition-colors duration-300 ease-in-out hover:text-transparent hover:bg-clip-text hover:bg-gradient-to-r from-red-500 to-purple-900"
-            href="/api-docs"
-          >
-            API
-          </Link>
-          <Link
-            className="relative text-sm font-poppins font-bold text-[#6b6b6b] transition-colors duration-300 ease-in-out hover:text-transparent hover:bg-clip-text hover:bg-gradient-to-r from-red-500 to-purple-900"
-            href="/about"
-          >
-            À propos
-          </Link>
-        </nav>
-      </header>
-      <main className="flex-1 p-4 md:p-8">
+      <HeaderComponent />
+      <main className="mt-[5rem] flex-1 p-4 md:p-8">
         <div className="mx-auto max-w-4xl space-y-8">
           <div>
             <h1 className="text-3xl font-bold">Documentation API</h1>

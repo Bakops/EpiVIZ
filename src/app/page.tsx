@@ -1,3 +1,4 @@
+import HeaderComponent from "@/components/layout/HeaderComponent";
 import { Hero } from "@/components/ui/animated-hero";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,50 +8,29 @@ import Link from "next/link";
 export default function Home() {
   return (
     <div className="flex flex-col min-h-screen">
-      <header className="header px-4 lg:px-6 h-16 flex items-center border-b bg-white shadow-md">
-        <Link className="flex items-center justify-center" href="/">
-          <div className="text-[30px] text-transparent bg-clip-text bg-gradient-to-r from-[#98ff87] to-[#3d96ff] font-poppins font-[700] flex flex-row items-center justify-center gap-1">
-            EPIVIZ .
-          </div>
-        </Link>
-        <nav className="ml-auto flex gap-4 sm:gap-6">
-          <Link
-            className="relative text-sm font-poppins font-bold text-[#6b6b6b] transition-colors duration-300 ease-in-out hover:text-transparent hover:bg-clip-text hover:bg-gradient-to-r from-[#98ff87] to-[#3d96ff]"
-            href="/"
-          >
-            Accueil
-          </Link>
-          <Link
-            className="relative text-sm font-poppins font-bold text-[#6b6b6b] transition-colors duration-300 ease-in-out hover:text-transparent hover:bg-clip-text hover:bg-gradient-to-r from-red-500 to-purple-900"
-            href="/dashboard"
-          >
-            Tableau de bord
-          </Link>
-          <Link
-            className="relative text-sm font-poppins font-bold text-[#6b6b6b] transition-colors duration-300 ease-in-out hover:text-transparent hover:bg-clip-text hover:bg-gradient-to-r from-red-500 to-purple-900"
-            href="/api-docs"
-          >
-            API
-          </Link>
-          <Link
-            className="relative text-sm font-poppins font-bold text-[#6b6b6b] transition-colors duration-300 ease-in-out hover:text-transparent hover:bg-clip-text hover:bg-gradient-to-r from-red-500 to-purple-900"
-            href="/about"
-          >
-            À propos
-          </Link>
-        </nav>
-      </header>
+      <HeaderComponent />
       <main className="flex-1">
-        <section className=" h-[45rem] w-full py-12 md:py-24 lg:py-32 bg-muted flex items-center justify-center">
+        <section className=" bg-[#FFF] h-[45rem] w-full py-12 md:py-24 lg:py-32 flex items-center justify-center">
           <div className="container px-4 md:px-6">
             <div className="flex flex-col items-center justify-center space-y-4 text-center">
               <Hero />
               <div className="space-x-4">
                 <Link href="/dashboard">
-                  <Button>Explorer les données</Button>
+                  <span className="top-[8px] left-[-4px] relative flex size-3">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-gradient-to-r from-[#98ff87] to-[#3d96ff] opacity-75"></span>
+                    <span className="relative inline-flex size-3 rounded-full bg-gradient-to-r from-[#98ff87] to-[#3d96ff]"></span>
+                  </span>
+                  <Button className="cursor-pointer font-bold">
+                    Explorer les données
+                  </Button>
                 </Link>
                 <Link href="/api-docs">
-                  <Button variant="outline">Documentation API</Button>
+                  <Button
+                    variant="outline"
+                    className="cursor-pointer hover:text-transparent hover:bg-clip-text hover:bg-gradient-to-r from-[#98ff87] to-[#3d96ff] font-bold"
+                  >
+                    Documentation API
+                  </Button>
                 </Link>
               </div>
             </div>

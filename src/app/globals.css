@@ -2,9 +2,11 @@
 @import "tw-animate-css";
 
 @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap");
+
 body {
   font-family: "Poppins", sans-serif;
 }
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
@@ -164,4 +166,25 @@ body {
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+}
+
+.hover\:shadow-gradient-to-r:hover {
+  box-shadow: 0 4px 6px -1px rgba(151, 255, 135, 0.603),
+    0 2px 4px -1px rgba(61, 152, 255, 0.541);
+}
+
+.hover\:backdrop-blur-md:hover {
+  backdrop-filter: blur(12px);
+}
+
+.hover\:text-transparent:hover {
+  color: transparent;
+}
+
+.hover\:bg-clip-text:hover {
+  background-clip: text;
+}
+
+.hover\:bg-gradient-to-r:hover {
+  background-image: linear-gradient(to right, #98ff87, #3d96ff);
 }
