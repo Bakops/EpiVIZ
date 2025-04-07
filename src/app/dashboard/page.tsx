@@ -1,6 +1,6 @@
 "use client";
-
 import HeaderComponent from "@/components/layout/HeaderComponent";
+import InteractiveMap from "@/components/pandemic-map";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -35,12 +35,9 @@ export default function DashboardPage() {
   useEffect(() => {
     async function fetchLocalisations() {
       try {
-        const data = await getLocalisations(); // Assurez-vous que cette fonction existe dans `api.js`
+        const data = await getLocalisations();
         console.log("Données des localisations récupérées :", data);
         setLocalisations(data);
-        if (data.length > 0) {
-          setSelectedLocalisation(data[0].id); // Sélectionne la première localisation par défaut
-        }
       } catch (error) {
         console.error(
           "Erreur lors de la récupération des localisations :",
@@ -66,7 +63,7 @@ export default function DashboardPage() {
     }
     fetchPandemics();
   }, []);
-  // Récupérer les données de la pandémie sélectionnée
+
   useEffect(() => {
     async function fetchPandemicData() {
       if (selectedPandemic) {
@@ -208,7 +205,7 @@ export default function DashboardPage() {
             <div>Graphiques à afficher ici</div>
           </TabsContent>
           <TabsContent value="map" className="border rounded-md p-4">
-            <div>Carte à afficher ici</div>
+            <InteractiveMap localisations={localisations} />
           </TabsContent>
           <TabsContent value="stats" className="border rounded-md p-4">
             <div>Statistiques détaillées à afficher ici</div>

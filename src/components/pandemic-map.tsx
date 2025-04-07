@@ -11,6 +11,7 @@ import {
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import axios from "axios";
 import { useEffect, useState } from "react";
+import { MapContainer, Marker, Popup, TileLayer } from "react-leaflet";
 
 interface PandemicMapProps {
   pandemic: string;
@@ -31,17 +32,27 @@ export const getPandemicMapData = async (
   return response.data;
 };
 
-export function PandemicMap({ pandemic, timeframe }: PandemicMapProps) {
+export default function PandemicMap({ pandemic, timeframe }: PandemicMapProps) {
   const [loading, setLoading] = useState(true);
   const [mapType, setMapType] = useState("spread");
+  const [localisations, setLocalisations] = useState<any[]>([]);
 
   useEffect(() => {
-    // Simuler le chargement des données
-    setLoading(true);
-    const timer = setTimeout(() => {
-      setLoading(false);
-    }, 1000);
-    return () => clearTimeout(timer);
+    // Récupérer les données des localisations
+    async function fetchLocalisations() {
+      try {
+        const data = await getPandemicMapData(pandemic, timeframe);
+        setLocalisations(data);
+      } catch (error) {
+        console.error(
+          "Erreur lors de la récupération des localisations :",
+          error
+        );
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchLocalisations();
   }, [pandemic, timeframe]);
 
   return (
@@ -76,26 +87,31 @@ export function PandemicMap({ pandemic, timeframe }: PandemicMapProps) {
           <div className="animate-pulse">Chargement de la carte...</div>
         </div>
       ) : (
-        <div className="h-[500px] w-full bg-muted/20 rounded-lg flex items-center justify-center">
-          <div className="text-center">
-            <p className="text-muted-foreground">
-              Carte de{" "}
-              {mapType === "spread"
-                ? "propagation"
-                : mapType === "intensity"
-                ? "l'intensité"
-                : "la mortalité"}{" "}
-              pour {pandemic}
-            </p>
-            <p className="text-xs text-muted-foreground">
-              Période: {timeframe}
-            </p>
-            <div className="mt-4 text-sm">
-              [Ici s'afficherait une carte interactive montrant la propagation
-              géographique]
-            </div>
-          </div>
-        </div>
+        <MapContainer
+          center={[0, 0]} // Coordonnées initiales (latitude, longitude)
+          zoom={2} // Niveau de zoom initial
+          style={{ height: "500px", width: "100%" }}
+        >
+          {/* Couche de tuiles (OpenStreetMap) */}
+          <TileLayer
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          />
+
+          {/* Ajout des marqueurs pour chaque localisation */}
+          {localisations.map((localisation) => (
+            <Marker
+              key={localisation.id}
+              position={[localisation.latitude, localisation.longitude]}
+            >
+              <Popup>
+                <strong>{localisation.country}</strong>
+                <br />
+                {localisation.continent}
+              </Popup>
+            </Marker>
+          ))}
+        </MapContainer>
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
