@@ -6,13 +6,13 @@ const api = axios.create({
 
 export async function getPandemics() {
   try {
-    const response = await api.get("/pandemies"); // Appel à l'API
-    const data = response.data; // Récupération des données
+    const response = await api.get("/pandemies");
+    const data = response.data;
     const transformedData = data.map((pandemic) => ({
       id: pandemic.id,
-      name: pandemic.type || "Nom non disponible", // Utilise le champ `type` comme nom
+      name: pandemic.type || "Nom non disponible",
     }));
-    return transformedData; // Retourne les données transformées
+    return transformedData;
   } catch (error) {
     console.error("Erreur lors de la récupération des pandémies :", error);
     throw error;
@@ -59,4 +59,20 @@ export const exportPandemicData = async (pandemicId) => {
     responseType: "blob", // Pour gérer les fichiers
   });
   return response.data;
+};
+
+export const getLocalisations = async () => {
+  try {
+    const response = await api.get("/localisations"); // Appel à l'endpoint backend
+    const data = response.data;
+    const transformedData = data.map((localisation) => ({
+      id: localisation.id,
+      country: localisation.country || "Pays non disponible",
+      continent: localisation.continent || "Continent non disponible",
+    }));
+    return transformedData; // Retourne les données transformées
+  } catch (error) {
+    console.error("Erreur lors de la récupération des localisations :", error);
+    throw error;
+  }
 };

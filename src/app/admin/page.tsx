@@ -53,9 +53,11 @@ export default function AdminPage() {
     e.preventDefault();
     try {
       const response = await createData(data);
-      console.log("Data created:", response);
+      console.log("Data créer:", response);
+      alert("Data créer avec succées!");
     } catch (error) {
-      console.error("Error creating data:", error);
+      console.error("Erreur lors de la creation de data:", error);
+      alert("Erreur lors de la creation de data");
     }
   };
 
@@ -66,8 +68,10 @@ export default function AdminPage() {
     try {
       const response = await createCalendrier(calendrier);
       console.log("Calendrier created:", response);
+      alert("Calendrier créé avec succès!");
     } catch (error) {
-      console.error("Error creating calendrier:", error);
+      console.error("Erreur lors de la creation de calendrier:", error);
+      alert("Erreur lors de la creation de calendrier");
     }
   };
 
@@ -78,8 +82,10 @@ export default function AdminPage() {
     try {
       const response = await createLocalisation(localisation);
       console.log("Localisation created:", response);
+      alert("Localisation créé avec succès!");
     } catch (error) {
-      console.error("Error creating localisation:", error);
+      console.error("Erreur lors de la creation de localisation:", error);
+      alert("Erreur lors de la creation de localisation");
     }
   };
 
@@ -88,8 +94,10 @@ export default function AdminPage() {
     try {
       const response = await createPandemie(pandemie);
       console.log("Pandemie created:", response);
+      alert("Pandemie créé avec succès!");
     } catch (error) {
-      console.error("Error creating pandemie:", error);
+      console.error("Erreur lors de la creation de pandemie:", error);
+      alert("Erreur lors de la creation de pandemie");
     }
   };
 

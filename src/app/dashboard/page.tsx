@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
+  getLocalisations,
   getPandemicMapData,
   getPandemics,
   getPandemicStats,
@@ -22,10 +23,33 @@ import { useEffect, useState } from "react";
 export default function DashboardPage() {
   const [selectedPandemic, setSelectedPandemic] = useState<string | null>(null);
   const [selectedTimeframe, setSelectedTimeframe] = useState("all");
+  const [selectedLocalisation, setSelectedLocalisation] = useState<
+    string | null
+  >(null);
+  const [localisations, setLocalisations] = useState<any[]>([]);
   const [pandemics, setPandemics] = useState<any[]>([]);
   const [stats, setStats] = useState<any>(null);
   const [timeline, setTimeline] = useState<any>(null);
   const [mapData, setMapData] = useState<any>(null);
+
+  useEffect(() => {
+    async function fetchLocalisations() {
+      try {
+        const data = await getLocalisations(); // Assurez-vous que cette fonction existe dans `api.js`
+        console.log("Données des localisations récupérées :", data);
+        setLocalisations(data);
+        if (data.length > 0) {
+          setSelectedLocalisation(data[0].id); // Sélectionne la première localisation par défaut
+        }
+      } catch (error) {
+        console.error(
+          "Erreur lors de la récupération des localisations :",
+          error
+        );
+      }
+    }
+    fetchLocalisations();
+  }, []);
 
   useEffect(() => {
     async function fetchPandemics() {
@@ -78,6 +102,21 @@ export default function DashboardPage() {
               {pandemics.map((pandemic) => (
                 <SelectItem key={pandemic.id} value={pandemic.id}>
                   {pandemic.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select
+            value={selectedLocalisation || ""}
+            onValueChange={(value) => setSelectedLocalisation(value)}
+          >
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Sélectionner une localisation" />
+            </SelectTrigger>
+            <SelectContent>
+              {localisations.map((localisation) => (
+                <SelectItem key={localisation.id} value={localisation.id}>
+                  {localisation.country} - {localisation.continent}
                 </SelectItem>
               ))}
             </SelectContent>
