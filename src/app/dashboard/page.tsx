@@ -18,7 +18,62 @@ import {
   getPandemicStats,
   getPandemicTimeline,
 } from "@/services/api";
+import {
+  CategoryScale,
+  Chart as ChartJS,
+  Legend,
+  LinearScale,
+  LineElement,
+  PointElement,
+  Title,
+  Tooltip,
+} from "chart.js";
 import { useEffect, useState } from "react";
+import { Line } from "react-chartjs-2";
+
+// Enregistrez les composants nécessaires pour Chart.js
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend
+);
+
+const chartData = {
+  labels: ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin"],
+  datasets: [
+    {
+      label: "Cas confirmés",
+      data: [100, 200, 300, 400, 500, 600],
+      borderColor: "rgba(75, 192, 192, 1)",
+      backgroundColor: "rgba(75, 192, 192, 0.2)",
+      tension: 0.4,
+    },
+    {
+      label: "Décès",
+      data: [50, 100, 150, 200, 250, 300],
+      borderColor: "rgba(255, 99, 132, 1)",
+      backgroundColor: "rgba(255, 99, 132, 0.2)",
+      tension: 0.4,
+    },
+  ],
+};
+
+const chartOptions = {
+  responsive: true,
+  plugins: {
+    legend: {
+      position: "top" as const,
+    },
+    title: {
+      display: true,
+      text: "Évolution des cas et des décès",
+    },
+  },
+};
 
 export default function DashboardPage() {
   const [selectedPandemic, setSelectedPandemic] = useState<string | null>(null);
@@ -52,10 +107,10 @@ export default function DashboardPage() {
     async function fetchPandemics() {
       try {
         const data = await getPandemics();
-        console.log("Données des pandémies récupérées :", data); // Vérifiez les données
-        setPandemics(data); // Met à jour l'état avec les données
+        console.log("Données des pandémies récupérées :", data);
+        setPandemics(data);
         if (data.length > 0) {
-          setSelectedPandemic(data[0].id); // Sélectionne la première pandémie par défaut
+          setSelectedPandemic(data[0].id);
         }
       } catch (error) {
         console.error("Erreur lors de la récupération des pandémies :", error);
@@ -202,7 +257,9 @@ export default function DashboardPage() {
             <TabsTrigger value="timeline">Chronologie</TabsTrigger>
           </TabsList>
           <TabsContent value="charts" className="border rounded-md p-4">
-            <div>Graphiques à afficher ici</div>
+            <div className="w-full h-full">
+              <Line data={chartData} options={chartOptions} />
+            </div>
           </TabsContent>
           <TabsContent value="map" className="border rounded-md p-4">
             <InteractiveMap localisations={localisations} />
