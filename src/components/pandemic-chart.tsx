@@ -1,5 +1,5 @@
 "use client";
-
+import axios from "axios";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AreaChart, BarChart, LineChart } from "lucide-react";
@@ -9,6 +9,20 @@ interface PandemicChartProps {
   pandemic: string;
   timeframe: string;
 }
+
+const api = axios.create({
+  baseURL: "http://localhost:8080/api", // Replace with your actual API base URL
+});
+
+export const getPandemicChartData = async (
+  pandemicId: string,
+  timeframe: string
+) => {
+  const response = await api.get(
+    `/pandemies/${pandemicId}/charts?timeframe=${timeframe}`
+  );
+  return response.data;
+};
 
 export function PandemicChart({ pandemic, timeframe }: PandemicChartProps) {
   const [loading, setLoading] = useState(true);

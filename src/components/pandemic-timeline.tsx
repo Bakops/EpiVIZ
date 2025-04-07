@@ -1,10 +1,20 @@
 "use client";
 
+import axios from "axios";
 import { useEffect, useState } from "react";
 
 interface PandemicTimelineProps {
   pandemic: string;
 }
+
+const api = axios.create({
+  baseURL: "http://localhost:8080/api", // Replace with your actual API base URL
+});
+
+export const getPandemicTimeline = async (pandemicId: string) => {
+  const response = await api.get(`/pandemies/${pandemicId}/timeline`);
+  return response.data;
+};
 
 export function PandemicTimeline({ pandemic }: PandemicTimelineProps) {
   const [loading, setLoading] = useState(true);

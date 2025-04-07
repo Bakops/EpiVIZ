@@ -9,12 +9,27 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import axios from "axios";
 import { useEffect, useState } from "react";
 
 interface PandemicMapProps {
   pandemic: string;
   timeframe: string;
 }
+
+const api = axios.create({
+  baseURL: "http://localhost:8080/api", // Replace with your actual API base URL
+});
+
+export const getPandemicMapData = async (
+  pandemicId: string,
+  timeframe: string
+) => {
+  const response = await api.get(
+    `/pandemies/${pandemicId}/map?timeframe=${timeframe}`
+  );
+  return response.data;
+};
 
 export function PandemicMap({ pandemic, timeframe }: PandemicMapProps) {
   const [loading, setLoading] = useState(true);
