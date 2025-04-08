@@ -25,10 +25,11 @@ const Popup = dynamic(() => import("react-leaflet").then((mod) => mod.Popup), {
 interface PandemicMapProps {
   pandemic: string;
   timeframe: string;
+  localisations: any[];
 }
 
 const api = axios.create({
-  baseURL: "http://localhost:8080/api", // Replace with your actual API base URL
+  baseURL: "http://localhost:8080/api",
 });
 
 export const getPandemicMapData = async (
@@ -81,8 +82,8 @@ export default function PandemicMap({ pandemic, timeframe }: PandemicMapProps) {
         </div>
       ) : (
         <MapContainer
-          center={[0, 0]} // Coordonnées initiales (latitude, longitude)
-          zoom={2} // Niveau de zoom initial
+          center={[0, 0]}
+          zoom={2}
           style={{ height: "500px", width: "100%" }}
         >
           <TileLayer

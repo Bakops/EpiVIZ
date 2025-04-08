@@ -189,3 +189,7 @@ body {
 .hover\:bg-gradient-to-r:hover {
   background-image: linear-gradient(to right, #98ff87, #3d96ff);
 }
+
+.leaflet-container.leaflet-touch.leaflet-retina.leaflet-fade-anim.leaflet-grab.leaflet-touch-drag.leaflet-touch-zoom {
+  z-index: 2;
+}
