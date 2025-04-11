@@ -1,7 +1,7 @@
 "use client";
 
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import axios from "axios";
+import { getAllLocations } from "@/services/api";
+import L from "leaflet";
 import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 
@@ -22,36 +22,23 @@ const Popup = dynamic(() => import("react-leaflet").then((mod) => mod.Popup), {
   ssr: false,
 });
 
-interface PandemicMapProps {
-  pandemic: string;
-  timeframe: string;
-  localisations: any[];
-}
-
-const api = axios.create({
-  baseURL: "http://localhost:8080/api",
+const customIcon = new L.Icon({
+  iconUrl: "/location.svg",
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowUrl: null,
 });
 
-export const getPandemicMapData = async (
-  pandemicId: string,
-  timeframe: string
-) => {
-  const response = await api.get(
-    `/pandemies/${pandemicId}/map?timeframe=${timeframe}`
-  );
-  return response.data;
-};
-
-export default function PandemicMap({ pandemic, timeframe }: PandemicMapProps) {
+export default function PandemicMap() {
   const [loading, setLoading] = useState(true);
-  const [mapType, setMapType] = useState("spread");
-  const [localisations, setLocalisations] = useState<any[]>([]);
+  const [locations, setLocations] = useState<any[]>([]);
 
   useEffect(() => {
-    async function fetchLocalisations() {
+    async function fetchLocations() {
       try {
-        const data = await getPandemicMapData(pandemic, timeframe);
-        setLocalisations(data);
+        const data = await getAllLocations(); // Appel à la fonction correcte
+        setLocations(data);
       } catch (error) {
         console.error(
           "Erreur lors de la récupération des localisations :",
@@ -61,21 +48,11 @@ export default function PandemicMap({ pandemic, timeframe }: PandemicMapProps) {
         setLoading(false);
       }
     }
-    fetchLocalisations();
-  }, [pandemic, timeframe]);
+    fetchLocations();
+  }, []);
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col sm:flex-row justify-between gap-4">
-        <Tabs defaultValue="spread" onValueChange={setMapType}>
-          <TabsList>
-            <TabsTrigger value="spread">Propagation</TabsTrigger>
-            <TabsTrigger value="intensity">Intensité</TabsTrigger>
-            <TabsTrigger value="mortality">Mortalité</TabsTrigger>
-          </TabsList>
-        </Tabs>
-      </div>
-
       {loading ? (
         <div className="h-[500px] w-full flex items-center justify-center bg-muted/20 rounded-lg">
           <div className="animate-pulse">Chargement de la carte...</div>
@@ -91,15 +68,16 @@ export default function PandemicMap({ pandemic, timeframe }: PandemicMapProps) {
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           />
 
-          {localisations.map((localisation) => (
+          {locations.map((location) => (
             <Marker
-              key={localisation.id}
-              position={[localisation.latitude, localisation.longitude]}
+              key={location.id}
+              position={[location.latitude, location.longitude]}
+              icon={customIcon} // Appliquer l'icône personnalisée
             >
               <Popup>
-                <strong>{localisation.country}</strong>
+                <strong>{location.country}</strong>
                 <br />
-                {localisation.continent}
+                {location.continent}
               </Popup>
             </Marker>
           ))}

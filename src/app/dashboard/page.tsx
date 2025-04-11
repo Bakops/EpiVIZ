@@ -11,13 +11,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  getLocalisations,
-  getPandemicMapData,
-  getPandemics,
-  getPandemicStats,
-  getPandemicTimeline,
-} from "@/services/api";
+import { getAllLocations, getPandemics } from "@/services/api";
 import {
   CategoryScale,
   Chart as ChartJS,
@@ -28,7 +22,6 @@ import {
   Title,
   Tooltip,
 } from "chart.js";
-import Papa from "papaparse";
 import { useEffect, useState } from "react";
 import { Line } from "react-chartjs-2";
 
@@ -53,7 +46,6 @@ export default function DashboardPage() {
   const [pandemics, setPandemics] = useState<any[]>([]);
   const [stats, setStats] = useState<any>(null);
   const [timeline, setTimeline] = useState<any>(null);
-  const [mapData, setMapData] = useState<any>(null);
 
   const [chartData, setChartData] = useState({
     labels: ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin"],
@@ -88,68 +80,10 @@ export default function DashboardPage() {
     },
   };
 
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
-  function handleImportCSV(event: React.ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
-    if (!file) {
-      console.error("Aucun fichier sélectionné.");
-      return;
-    }
-
-    // Utilisation de PapaParse pour lire le fichier CSV
-    Papa.parse(file, {
-      header: true,
-      skipEmptyLines: true,
-      complete: (results) => {
-        console.log("Données importées :", results.data);
-        const data = results.data as Array<{
-          country: string;
-          cases: string;
-          deaths: string;
-        }>;
-
-        // Mettre à jour les localisations
-        const updatedLocalisations = data.map((row, index) => ({
-          id: index + 1,
-          country: row.country,
-          cases: parseInt(row.cases, 10),
-          deaths: parseInt(row.deaths, 10),
-        }));
-        setLocalisations(updatedLocalisations);
-
-        // Mettre à jour les données du graphique
-        const updatedChartData = {
-          labels: updatedLocalisations.map((loc) => loc.country),
-          datasets: [
-            {
-              label: "Cas confirmés",
-              data: updatedLocalisations.map((loc) => loc.cases),
-              borderColor: "rgba(75, 192, 192, 1)",
-              backgroundColor: "rgba(75, 192, 192, 0.2)",
-              tension: 0.4,
-            },
-            {
-              label: "Décès",
-              data: updatedLocalisations.map((loc) => loc.deaths),
-              borderColor: "rgba(255, 99, 132, 1)",
-              backgroundColor: "rgba(255, 99, 132, 0.2)",
-              tension: 0.4,
-            },
-          ],
-        };
-        setChartData(updatedChartData);
-      },
-      error: (error) => {
-        console.error("Erreur lors de l'importation du fichier CSV :", error);
-      },
-    });
-  }
-
   useEffect(() => {
     async function fetchLocalisations() {
       try {
-        const data = await getLocalisations();
+        const data = await getAllLocations();
         console.log("Données des localisations récupérées :", data);
         setLocalisations(data);
       } catch (error) {
@@ -178,23 +112,28 @@ export default function DashboardPage() {
     fetchPandemics();
   }, []);
 
-  useEffect(() => {
-    async function fetchPandemicData() {
-      if (selectedPandemic) {
-        try {
-          const statsData = await getPandemicStats(selectedPandemic);
-          const timelineData = await getPandemicTimeline(selectedPandemic);
-          const mapData = await getPandemicMapData(selectedPandemic);
-          setStats(statsData);
-          setTimeline(timelineData);
-          setMapData(mapData);
-        } catch (error) {
-          console.error("Erreur lors de la récupération des données :", error);
-        }
-      }
+  const handleLocalisationChange = (localisationId: string) => {
+    setSelectedLocalisation(localisationId);
+
+    const localisation = localisations.find((loc) => loc.id === localisationId);
+
+    if (localisation) {
+      setMapData({
+        center: [localisation.latitude, localisation.longitude], // Coordonnées du pays
+        zoom: 6,
+        marker: {
+          position: [localisation.latitude, localisation.longitude],
+          label: localisation.country,
+        },
+      });
     }
-    fetchPandemicData();
-  }, [selectedPandemic, selectedTimeframe]);
+  };
+
+  const [mapData, setMapData] = useState({
+    center: [0, 0], // Coordonnées initiales (par exemple, le centre du monde)
+    zoom: 2, // Niveau de zoom initial
+    marker: null, // Pas de marqueur initialement
+  });
 
   return (
     <div className="flex min-h-screen w-full flex-col">
@@ -210,26 +149,34 @@ export default function DashboardPage() {
               <SelectValue placeholder="Sélectionner une pandémie" />
             </SelectTrigger>
             <SelectContent>
-              {pandemics.map((pandemic) => (
-                <SelectItem key={pandemic.id} value={pandemic.id}>
-                  {pandemic.name}
-                </SelectItem>
-              ))}
+              {pandemics.length > 0 ? (
+                pandemics.map((pandemie) => (
+                  <SelectItem key={pandemie.id} value={pandemie.id}>
+                    {pandemie.name}
+                  </SelectItem>
+                ))
+              ) : (
+                <SelectItem disabled>Aucune pandémie disponible</SelectItem>
+              )}
             </SelectContent>
           </Select>
           <Select
             value={selectedLocalisation || ""}
-            onValueChange={(value) => setSelectedLocalisation(value)}
+            onValueChange={(value) => handleLocalisationChange(value)}
           >
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Sélectionner une localisation" />
             </SelectTrigger>
             <SelectContent>
-              {localisations.map((localisation) => (
-                <SelectItem key={localisation.id} value={localisation.id}>
-                  {localisation.country} - {localisation.continent}
-                </SelectItem>
-              ))}
+              {localisations.length > 0 ? (
+                localisations.map((location) => (
+                  <SelectItem key={location.id} value={location.id}>
+                    {location.country}
+                  </SelectItem>
+                ))
+              ) : (
+                <SelectItem disabled>Aucune localisation disponible</SelectItem>
+              )}
             </SelectContent>
           </Select>
           <Select
@@ -248,62 +195,10 @@ export default function DashboardPage() {
           </Select>
           <div className="ml-auto flex items-center gap-4">
             {/* Bouton pour ouvrir la modale */}
-            <Button variant="outline" onClick={() => setIsModalOpen(true)}>
-              Importer les données
-            </Button>
 
             {/* Bouton pour exporter les données */}
             <Button variant="outline">Exporter les données</Button>
           </div>
-
-          {/* Modale */}
-          {isModalOpen && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0000005b] bg-opacity-50">
-              <div className="bg-white rounded-lg shadow-lg p-6 w-[90%] max-w-md">
-                <h2 className="text-xl font-bold mb-4">
-                  Importer un fichier CSV
-                </h2>
-                <div
-                  className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center"
-                  onDragOver={(e) => e.preventDefault()}
-                  onDrop={(e) => {
-                    e.preventDefault();
-                    const file = e.dataTransfer.files[0];
-                    handleImportCSV({
-                      target: { files: [file] },
-                      currentTarget: { files: [file] },
-                    } as unknown as React.ChangeEvent<HTMLInputElement>);
-                  }}
-                >
-                  <p className="text-gray-500">
-                    Glissez et déposez votre fichier ici
-                  </p>
-                  <p className="text-gray-500">ou</p>
-                  <input
-                    type="file"
-                    accept=".csv"
-                    onChange={handleImportCSV}
-                    className="hidden"
-                    id="file-input"
-                  />
-                  <label
-                    htmlFor="file-input"
-                    className="text-blue-500 underline cursor-pointer"
-                  >
-                    Sélectionnez un fichier
-                  </label>
-                </div>
-                <div className="mt-4 flex justify-end">
-                  <Button
-                    variant="outline"
-                    onClick={() => setIsModalOpen(false)}
-                  >
-                    Fermer
-                  </Button>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
         {/* Affichage des statistiques */}
         <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
@@ -375,7 +270,11 @@ export default function DashboardPage() {
             </div>
           </TabsContent>
           <TabsContent value="map" className="border rounded-md p-4">
-            <InteractiveMap localisations={localisations} className="z-2" />
+            <InteractiveMap
+              localisations={localisations}
+              mapData={mapData} // Passez les données de la carte
+              className="z-2"
+            />
           </TabsContent>
           <TabsContent value="stats" className="border rounded-md p-4">
             <div>Statistiques détaillées à afficher ici</div>
