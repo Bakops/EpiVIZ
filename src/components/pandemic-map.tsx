@@ -1,11 +1,14 @@
 "use client";
 
 import { getAllLocations } from "@/services/api";
-import L from "leaflet";
 import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 
-// Charger React Leaflet uniquement côté client
+let L;
+if (typeof window !== "undefined") {
+  L = require("leaflet");
+}
+
 const MapContainer = dynamic(
   () => import("react-leaflet").then((mod) => mod.MapContainer),
   { ssr: false }
@@ -22,13 +25,16 @@ const Popup = dynamic(() => import("react-leaflet").then((mod) => mod.Popup), {
   ssr: false,
 });
 
-const customIcon = new L.Icon({
-  iconUrl: "/location.svg",
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowUrl: null,
-});
+let customIcon: L.Icon | undefined;
+if (typeof window !== "undefined" && L) {
+  customIcon = new L.Icon({
+    iconUrl: "/location.svg",
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    shadowUrl: null,
+  });
+}
 
 export default function PandemicMap() {
   const [loading, setLoading] = useState(true);
@@ -37,7 +43,7 @@ export default function PandemicMap() {
   useEffect(() => {
     async function fetchLocations() {
       try {
-        const data = await getAllLocations(); // Appel à la fonction correcte
+        const data = await getAllLocations();
         setLocations(data);
       } catch (error) {
         console.error(
@@ -72,7 +78,7 @@ export default function PandemicMap() {
             <Marker
               key={location.id}
               position={[location.latitude, location.longitude]}
-              icon={customIcon} // Appliquer l'icône personnalisée
+              icon={customIcon}
             >
               <Popup>
                 <strong>{location.country}</strong>
