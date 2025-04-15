@@ -1,4 +1,5 @@
 "use client";
+
 import HeaderComponent from "@/components/layout/HeaderComponent";
 import InteractiveMap from "@/components/pandemic-map";
 import { Button } from "@/components/ui/button";
@@ -11,7 +12,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { getAllLocations, getPandemics } from "@/services/api";
+import {
+  getAllLocations,
+  getGlobalData,
+  getLocationData,
+  getPandemics,
+} from "@/services/api";
 import {
   CategoryScale,
   Chart as ChartJS,
@@ -25,7 +31,6 @@ import {
 import { useEffect, useState } from "react";
 import { Line } from "react-chartjs-2";
 
-// Enregistrez les composants nécessaires pour Chart.js
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -44,8 +49,14 @@ export default function DashboardPage() {
   >(null);
   const [localisations, setLocalisations] = useState<any[]>([]);
   const [pandemics, setPandemics] = useState<any[]>([]);
-  const [stats, setStats] = useState<any>(null);
+  const [stats, setStats] = useState<any>({
+    cas_confirmes: 0,
+    deces: 0,
+    new_cases: 0,
+    new_deaths: 0,
+  });
   const [timeline, setTimeline] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const [chartData, setChartData] = useState({
     labels: ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin"],
@@ -64,6 +75,20 @@ export default function DashboardPage() {
         backgroundColor: "rgba(255, 99, 132, 0.2)",
         tension: 0.4,
       },
+      {
+        label: "Nouveaux cas",
+        data: [20, 30, 40, 50, 60, 70],
+        borderColor: "rgba(54, 162, 235, 1)",
+        backgroundColor: "rgba(54, 162, 235, 0.2)",
+        tension: 0.4,
+      },
+      {
+        label: "Nouveaux décès",
+        data: [5, 10, 15, 20, 25, 30],
+        borderColor: "rgba(255, 159, 64, 1)",
+        backgroundColor: "rgba(255, 159, 64, 0.2)",
+        tension: 0.4,
+      },
     ],
   });
 
@@ -71,7 +96,7 @@ export default function DashboardPage() {
     responsive: true,
     plugins: {
       legend: {
-        position: "top" as const,
+        position: "top",
       },
       title: {
         display: true,
@@ -84,7 +109,6 @@ export default function DashboardPage() {
     async function fetchLocalisations() {
       try {
         const data = await getAllLocations();
-        console.log("Données des localisations récupérées :", data);
         setLocalisations(data);
       } catch (error) {
         console.error(
@@ -100,7 +124,6 @@ export default function DashboardPage() {
     async function fetchPandemics() {
       try {
         const data = await getPandemics();
-        console.log("Données des pandémies récupérées :", data);
         setPandemics(data);
         if (data.length > 0) {
           setSelectedPandemic(data[0].id);
@@ -112,34 +135,141 @@ export default function DashboardPage() {
     fetchPandemics();
   }, []);
 
-  const handleLocalisationChange = (localisationId: string) => {
-    setSelectedLocalisation(localisationId);
+  useEffect(() => {
+    if (selectedPandemic) {
+      if (selectedLocalisation) {
+        fetchLocationData(selectedLocalisation);
+      } else {
+        fetchGlobalData();
+      }
+    }
+  }, [selectedPandemic, selectedLocalisation]);
 
-    const localisation = localisations.find((loc) => loc.id === localisationId);
+  const updateChartData = (timelineData) => {
+    const labels = timelineData.map((item) =>
+      new Date(item.date).toLocaleDateString()
+    );
+    const confirmedCases = timelineData.map((item) => item.cas_confirmes);
+    const deaths = timelineData.map((item) => item.deces);
+    const newCases = timelineData.map((item) => item.new_cases);
+    const newDeaths = timelineData.map((item) => item.new_deaths);
 
-    if (localisation) {
-      setMapData({
-        center: [localisation.latitude, localisation.longitude], // Coordonnées du pays
-        zoom: 6,
-        marker: {
-          position: [localisation.latitude, localisation.longitude],
-          label: localisation.country,
+    setChartData({
+      labels,
+      datasets: [
+        {
+          label: "Cas confirmés",
+          data: confirmedCases,
+          borderColor: "rgba(75, 192, 192, 1)",
+          backgroundColor: "rgba(75, 192, 192, 0.2)",
+          tension: 0.4,
         },
+        {
+          label: "Décès",
+          data: deaths,
+          borderColor: "rgba(255, 99, 132, 1)",
+          backgroundColor: "rgba(255, 99, 132, 0.2)",
+          tension: 0.4,
+        },
+        {
+          label: "Nouveaux cas",
+          data: newCases,
+          borderColor: "rgba(54, 162, 235, 1)",
+          backgroundColor: "rgba(54, 162, 235, 0.2)",
+          tension: 0.4,
+        },
+        {
+          label: "Nouveaux décès",
+          data: newDeaths,
+          borderColor: "rgba(255, 159, 64, 1)",
+          backgroundColor: "rgba(255, 159, 64, 0.2)",
+          tension: 0.4,
+        },
+      ],
+    });
+  };
+
+  const fetchGlobalData = async () => {
+    setIsLoading(true);
+    try {
+      const globalData = await getGlobalData();
+      setStats({
+        cas_confirmes: globalData.cas_confirmes || 0,
+        deces: globalData.deces || 0,
+        new_cases: globalData.new_cases || 0,
+        new_deaths: globalData.new_deaths || 0,
       });
+
+      if (globalData.timeline) {
+        updateChartData(globalData.timeline);
+      }
+    } catch (error) {
+      console.error(
+        "Erreur lors de la récupération des données globales:",
+        error
+      );
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const [mapData, setMapData] = useState({
-    center: [0, 0], // Coordonnées initiales (par exemple, le centre du monde)
-    zoom: 2, // Niveau de zoom initial
-    marker: null, // Pas de marqueur initialement
-  });
+  const fetchLocationData = async (locationId) => {
+    setIsLoading(true);
+    try {
+      const data = await getLocationData(locationId);
+      setStats({
+        cas_confirmes: data.cas_confirmes || 0,
+        deces: data.deces || 0,
+        new_cases: data.new_cases || 0,
+        new_deaths: data.new_deaths || 0,
+      });
+
+      if (data.timeline) {
+        updateChartData(data.timeline);
+      }
+    } catch (error) {
+      console.error(
+        "Erreur lors de la récupération des données de localisation:",
+        error
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleLocalisationChange = (localisationId) => {
+    setSelectedLocalisation(localisationId);
+
+    if (!localisationId) {
+      fetchGlobalData();
+      return;
+    }
+
+    const localisation = localisations.find((loc) => loc.id === localisationId);
+    if (localisation) {
+      fetchLocationData(localisationId);
+    }
+  };
+
+  const handleLocationClick = (data, locationId) => {
+    setStats({
+      cas_confirmes: data.cas_confirmes || 0,
+      deces: data.deces || 0,
+      new_cases: data.new_cases || 0,
+      new_deaths: data.new_deaths || 0,
+    });
+
+    setSelectedLocalisation(locationId);
+
+    if (data.timeline) {
+      updateChartData(data.timeline);
+    }
+  };
 
   return (
     <div className="flex min-h-screen w-full flex-col">
       <HeaderComponent />
       <main className="mt-[5rem] flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
-        {/* Sélection des filtres */}
         <div className="flex items-center gap-4">
           <Select
             value={selectedPandemic || ""}
@@ -152,7 +282,7 @@ export default function DashboardPage() {
               {pandemics.length > 0 ? (
                 pandemics.map((pandemie) => (
                   <SelectItem key={pandemie.id} value={pandemie.id}>
-                    {pandemie.name}
+                    {pandemie.nom_pandemie}
                   </SelectItem>
                 ))
               ) : (
@@ -194,69 +324,119 @@ export default function DashboardPage() {
             </SelectContent>
           </Select>
           <div className="ml-auto flex items-center gap-4">
-            {/* Bouton pour ouvrir la modale */}
-
-            {/* Bouton pour exporter les données */}
             <Button variant="outline">Exporter les données</Button>
           </div>
         </div>
-        {/* Affichage des statistiques */}
         <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
           <Card>
             <CardHeader>
-              <CardTitle>Taux de transmission</CardTitle>
+              <CardTitle>Nombre de cas confirmés</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
-                {stats?.transmissionRate ?? "XX"}
-              </div>
-              <p className="text-sm text-muted-foreground">
-                {stats?.transmissionRateDescription ?? "Aucune donnée"}
-              </p>
+              {isLoading ? (
+                <div className="flex items-center justify-center h-12">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-900"></div>
+                </div>
+              ) : (
+                <>
+                  <div className="text-2xl font-bold">
+                    {stats.cas_confirmes.toLocaleString()}
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    {selectedLocalisation
+                      ? `Données pour ${
+                          localisations.find(
+                            (loc) => loc.id === selectedLocalisation
+                          )?.country || "la localisation sélectionnée"
+                        }`
+                      : "Données globales"}
+                  </p>
+                </>
+              )}
             </CardContent>
           </Card>
           <Card>
             <CardHeader>
-              <CardTitle>Taux de mortalité</CardTitle>
+              <CardTitle>Nombre de décès</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
-                {stats?.mortalityRate ?? "XX"}
-              </div>
-              <p className="text-sm text-muted-foreground">
-                {stats?.mortalityRateDescription ?? "Aucune donnée"}
-              </p>
+              {isLoading ? (
+                <div className="flex items-center justify-center h-12">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-900"></div>
+                </div>
+              ) : (
+                <>
+                  <div className="text-2xl font-bold">
+                    {stats.deces.toLocaleString()}
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    {selectedLocalisation
+                      ? `Données pour ${
+                          localisations.find(
+                            (loc) => loc.id === selectedLocalisation
+                          )?.country || "la localisation sélectionnée"
+                        }`
+                      : "Données globales"}
+                  </p>
+                </>
+              )}
             </CardContent>
           </Card>
           <Card>
             <CardHeader>
-              <CardTitle>Durée moyenne</CardTitle>
+              <CardTitle>Nouveaux cas</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
-                {stats?.averageDuration ?? "XX"}
-              </div>
-              <p className="text-sm text-muted-foreground">
-                {stats?.averageDurationDescription ?? "Aucune donnée"}
-              </p>
+              {isLoading ? (
+                <div className="flex items-center justify-center h-12">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-900"></div>
+                </div>
+              ) : (
+                <>
+                  <div className="text-2xl font-bold">
+                    {stats.new_cases.toLocaleString()}
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    {selectedLocalisation
+                      ? `Données pour ${
+                          localisations.find(
+                            (loc) => loc.id === selectedLocalisation
+                          )?.country || "la localisation sélectionnée"
+                        }`
+                      : "Données globales"}
+                  </p>
+                </>
+              )}
             </CardContent>
           </Card>
           <Card>
             <CardHeader>
-              <CardTitle>Population touchée</CardTitle>
+              <CardTitle>Nouveaux décès</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
-                {stats?.affectedPopulation ?? "XX"}
-              </div>
-              <p className="text-sm text-muted-foreground">
-                {stats?.affectedPopulationDescription ?? "Aucune donnée"}
-              </p>
+              {isLoading ? (
+                <div className="flex items-center justify-center h-12">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-900"></div>
+                </div>
+              ) : (
+                <>
+                  <div className="text-2xl font-bold">
+                    {stats.new_deaths.toLocaleString()}
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    {selectedLocalisation
+                      ? `Données pour ${
+                          localisations.find(
+                            (loc) => loc.id === selectedLocalisation
+                          )?.country || "la localisation sélectionnée"
+                        }`
+                      : "Données globales"}
+                  </p>
+                </>
+              )}
             </CardContent>
           </Card>
         </div>
-
-        {/* Affichage des données dans les onglets */}
         <Tabs defaultValue="charts">
           <TabsList>
             <TabsTrigger value="charts">Graphiques</TabsTrigger>
@@ -272,7 +452,8 @@ export default function DashboardPage() {
           <TabsContent value="map" className="border rounded-md p-4">
             <InteractiveMap
               localisations={localisations}
-              mapData={mapData} // Passez les données de la carte
+              selectedLocationId={selectedLocalisation}
+              onLocationClick={handleLocationClick}
               className="z-2"
             />
           </TabsContent>

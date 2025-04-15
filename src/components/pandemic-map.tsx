@@ -1,6 +1,6 @@
 "use client";
 
-import { getAllLocations } from "@/services/api";
+import { getAllLocations, getLocationData } from "@/services/api";
 import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 
@@ -36,7 +36,7 @@ if (typeof window !== "undefined" && L) {
   });
 }
 
-export default function PandemicMap() {
+export default function PandemicMap({ onLocationClick, selectedLocationId }) {
   const [loading, setLoading] = useState(true);
   const [locations, setLocations] = useState<any[]>([]);
 
@@ -56,6 +56,18 @@ export default function PandemicMap() {
     }
     fetchLocations();
   }, []);
+
+  const handleMarkerClick = async (location) => {
+    try {
+      const data = await getLocationData(location.id);
+      onLocationClick(data, location.id);
+    } catch (error) {
+      console.error(
+        "Erreur lors de la récupération des données de localisation:",
+        error
+      );
+    }
+  };
 
   return (
     <div className="space-y-4">
@@ -79,11 +91,19 @@ export default function PandemicMap() {
               key={location.id}
               position={[location.latitude, location.longitude]}
               icon={customIcon}
+              eventHandlers={{
+                click: () => handleMarkerClick(location),
+              }}
+              opacity={selectedLocationId === location.id ? 1 : 0.5}
             >
               <Popup>
                 <strong>{location.country}</strong>
                 <br />
                 {location.continent}
+                <br />
+                Cas confirmés: {location.cas_confirmes}
+                <br />
+                Décès: {location.deces}
               </Popup>
             </Marker>
           ))}
