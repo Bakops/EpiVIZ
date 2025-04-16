@@ -59,32 +59,32 @@ export default function DashboardPage() {
   const [isLoading, setIsLoading] = useState(false);
 
   const [chartData, setChartData] = useState({
-    labels: ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin"],
+    labels: [],
     datasets: [
       {
         label: "Cas confirmés",
-        data: [100, 200, 300, 400, 500, 600],
+        data: [],
         borderColor: "rgba(75, 192, 192, 1)",
         backgroundColor: "rgba(75, 192, 192, 0.2)",
         tension: 0.4,
       },
       {
         label: "Décès",
-        data: [50, 100, 150, 200, 250, 300],
+        data: [],
         borderColor: "rgba(255, 99, 132, 1)",
         backgroundColor: "rgba(255, 99, 132, 0.2)",
         tension: 0.4,
       },
       {
         label: "Nouveaux cas",
-        data: [20, 30, 40, 50, 60, 70],
+        data: [],
         borderColor: "rgba(54, 162, 235, 1)",
         backgroundColor: "rgba(54, 162, 235, 0.2)",
         tension: 0.4,
       },
       {
         label: "Nouveaux décès",
-        data: [5, 10, 15, 20, 25, 30],
+        data: [],
         borderColor: "rgba(255, 159, 64, 1)",
         backgroundColor: "rgba(255, 159, 64, 0.2)",
         tension: 0.4,
@@ -138,14 +138,60 @@ export default function DashboardPage() {
   useEffect(() => {
     if (selectedPandemic) {
       if (selectedLocalisation) {
-        fetchLocationData(selectedLocalisation);
+        fetchLocationData(selectedLocalisation, selectedPandemic);
       } else {
-        fetchGlobalData();
+        fetchGlobalData(selectedPandemic);
       }
     }
   }, [selectedPandemic, selectedLocalisation]);
 
-  const updateChartData = (timelineData) => {
+  const updateChartData = (
+    timelineData: {
+      date: string;
+      cas_confirmes: number;
+      deces: number;
+      new_cases: number;
+      new_deaths: number;
+    }[]
+  ) => {
+    if (!timelineData || timelineData.length === 0) {
+      // Réinitialiser le graphique si pas de données
+      setChartData({
+        labels: [],
+        datasets: [
+          {
+            label: "Cas confirmés",
+            data: [],
+            borderColor: "rgba(75, 192, 192, 1)",
+            backgroundColor: "rgba(75, 192, 192, 0.2)",
+            tension: 0.4,
+          },
+          {
+            label: "Décès",
+            data: [],
+            borderColor: "rgba(255, 99, 132, 1)",
+            backgroundColor: "rgba(255, 99, 132, 0.2)",
+            tension: 0.4,
+          },
+          {
+            label: "Nouveaux cas",
+            data: [],
+            borderColor: "rgba(54, 162, 235, 1)",
+            backgroundColor: "rgba(54, 162, 235, 0.2)",
+            tension: 0.4,
+          },
+          {
+            label: "Nouveaux décès",
+            data: [],
+            borderColor: "rgba(255, 159, 64, 1)",
+            backgroundColor: "rgba(255, 159, 64, 0.2)",
+            tension: 0.4,
+          },
+        ],
+      });
+      return;
+    }
+
     const labels = timelineData.map((item) =>
       new Date(item.date).toLocaleDateString()
     );
@@ -155,7 +201,6 @@ export default function DashboardPage() {
     const newDeaths = timelineData.map((item) => item.new_deaths);
 
     setChartData({
-      labels,
       datasets: [
         {
           label: "Cas confirmés",
@@ -188,11 +233,12 @@ export default function DashboardPage() {
       ],
     });
   };
+  const fetchGlobalData = async (pandemicId) => {
+    if (!pandemicId) return;
 
-  const fetchGlobalData = async () => {
     setIsLoading(true);
     try {
-      const globalData = await getGlobalData();
+      const globalData = await getGlobalData(pandemicId);
       setStats({
         cas_confirmes: globalData.cas_confirmes || 0,
         deces: globalData.deces || 0,
@@ -201,6 +247,7 @@ export default function DashboardPage() {
       });
 
       if (globalData.timeline) {
+        setTimeline(globalData.timeline);
         updateChartData(globalData.timeline);
       }
     } catch (error) {
@@ -213,10 +260,12 @@ export default function DashboardPage() {
     }
   };
 
-  const fetchLocationData = async (locationId) => {
+  const fetchLocationData = async (locationId, pandemicId) => {
+    if (!locationId || !pandemicId) return;
+
     setIsLoading(true);
     try {
-      const data = await getLocationData(locationId);
+      const data = await getLocationData(locationId, pandemicId);
       setStats({
         cas_confirmes: data.cas_confirmes || 0,
         deces: data.deces || 0,
@@ -225,6 +274,7 @@ export default function DashboardPage() {
       });
 
       if (data.timeline) {
+        setTimeline(data.timeline);
         updateChartData(data.timeline);
       }
     } catch (error) {
@@ -240,35 +290,24 @@ export default function DashboardPage() {
   const handleLocalisationChange = (localisationId) => {
     setSelectedLocalisation(localisationId);
 
-    if (!localisationId) {
-      fetchGlobalData();
+    if (localisationId === "global") {
+      setSelectedLocalisation(null);
+      fetchGlobalData(selectedPandemic);
       return;
     }
 
-    const localisation = localisations.find((loc) => loc.id === localisationId);
-    if (localisation) {
-      fetchLocationData(localisationId);
-    }
+    fetchLocationData(localisationId, selectedPandemic);
   };
 
   const handleLocationClick = (data, locationId) => {
-    setStats({
-      cas_confirmes: data.cas_confirmes || 0,
-      deces: data.deces || 0,
-      new_cases: data.new_cases || 0,
-      new_deaths: data.new_deaths || 0,
-    });
-
     setSelectedLocalisation(locationId);
-
-    if (data.timeline) {
-      updateChartData(data.timeline);
-    }
+    fetchLocationData(locationId, selectedPandemic);
   };
 
   return (
     <div className="flex min-h-screen w-full flex-col">
       <HeaderComponent />
+
       <main className="mt-[5rem] flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
         <div className="flex items-center gap-4">
           <Select
@@ -298,10 +337,11 @@ export default function DashboardPage() {
               <SelectValue placeholder="Sélectionner une localisation" />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="global">Global</SelectItem>
               {localisations.length > 0 ? (
                 localisations.map((location) => (
                   <SelectItem key={location.id} value={location.id}>
-                    {location.country}
+                    {location.country || location.nom}{" "}
                   </SelectItem>
                 ))
               ) : (
@@ -324,7 +364,9 @@ export default function DashboardPage() {
             </SelectContent>
           </Select>
           <div className="ml-auto flex items-center gap-4">
-            <Button variant="outline">Exporter les données</Button>
+            <Button variant="outline" disabled={!selectedPandemic}>
+              Exporter les données
+            </Button>
           </div>
         </div>
         <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
@@ -347,7 +389,11 @@ export default function DashboardPage() {
                       ? `Données pour ${
                           localisations.find(
                             (loc) => loc.id === selectedLocalisation
-                          )?.country || "la localisation sélectionnée"
+                          )?.country ||
+                          localisations.find(
+                            (loc) => loc.id === selectedLocalisation
+                          )?.nom ||
+                          "la localisation sélectionnée"
                         }`
                       : "Données globales"}
                   </p>
@@ -374,7 +420,11 @@ export default function DashboardPage() {
                       ? `Données pour ${
                           localisations.find(
                             (loc) => loc.id === selectedLocalisation
-                          )?.country || "la localisation sélectionnée"
+                          )?.country ||
+                          localisations.find(
+                            (loc) => loc.id === selectedLocalisation
+                          )?.nom ||
+                          "la localisation sélectionnée"
                         }`
                       : "Données globales"}
                   </p>
@@ -401,7 +451,11 @@ export default function DashboardPage() {
                       ? `Données pour ${
                           localisations.find(
                             (loc) => loc.id === selectedLocalisation
-                          )?.country || "la localisation sélectionnée"
+                          )?.country ||
+                          localisations.find(
+                            (loc) => loc.id === selectedLocalisation
+                          )?.nom ||
+                          "la localisation sélectionnée"
                         }`
                       : "Données globales"}
                   </p>
@@ -428,7 +482,11 @@ export default function DashboardPage() {
                       ? `Données pour ${
                           localisations.find(
                             (loc) => loc.id === selectedLocalisation
-                          )?.country || "la localisation sélectionnée"
+                          )?.country ||
+                          localisations.find(
+                            (loc) => loc.id === selectedLocalisation
+                          )?.nom ||
+                          "la localisation sélectionnée"
                         }`
                       : "Données globales"}
                   </p>
@@ -454,6 +512,7 @@ export default function DashboardPage() {
               localisations={localisations}
               selectedLocationId={selectedLocalisation}
               onLocationClick={handleLocationClick}
+              pandemicId={selectedPandemic}
               className="z-2"
             />
           </TabsContent>
@@ -461,7 +520,53 @@ export default function DashboardPage() {
             <div>Statistiques détaillées à afficher ici</div>
           </TabsContent>
           <TabsContent value="timeline" className="border rounded-md p-4">
-            <div>Chronologie à afficher ici</div>
+            {timeline && timeline.length > 0 ? (
+              <div className="space-y-4">
+                {timeline.map((item, index) => (
+                  <div key={index} className="border-b pb-2">
+                    <h3 className="font-medium">
+                      {new Date(item.date).toLocaleDateString()}
+                    </h3>
+                    <div className="grid grid-cols-2 gap-2 mt-2">
+                      <div>
+                        <span className="text-sm text-muted-foreground">
+                          Cas confirmés:
+                        </span>
+                        <span className="ml-2 font-medium">
+                          {item.cas_confirmes.toLocaleString()}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-sm text-muted-foreground">
+                          Décès:
+                        </span>
+                        <span className="ml-2 font-medium">
+                          {item.deces.toLocaleString()}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-sm text-muted-foreground">
+                          Nouveaux cas:
+                        </span>
+                        <span className="ml-2 font-medium">
+                          {item.new_cases.toLocaleString()}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-sm text-muted-foreground">
+                          Nouveaux décès:
+                        </span>
+                        <span className="ml-2 font-medium">
+                          {item.new_deaths.toLocaleString()}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div>Aucune donnée chronologique disponible</div>
+            )}
           </TabsContent>
         </Tabs>
       </main>
