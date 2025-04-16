@@ -41,6 +41,21 @@ ChartJS.register(
   Legend
 );
 
+// Définir un type pour les données des datasets
+type ChartDataset = {
+  label: string;
+  data: number[];
+  borderColor: string;
+  backgroundColor: string;
+  tension: number;
+};
+
+// Définir un type pour les données du chart
+type ChartData = {
+  labels: string[];
+  datasets: ChartDataset[];
+};
+
 export default function DashboardPage() {
   const [selectedPandemic, setSelectedPandemic] = useState<string | null>(null);
   const [selectedTimeframe, setSelectedTimeframe] = useState("all");
@@ -58,7 +73,7 @@ export default function DashboardPage() {
   const [timeline, setTimeline] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const [chartData, setChartData] = useState({
+  const [chartData, setChartData] = useState<ChartData>({
     labels: [],
     datasets: [
       {
@@ -95,9 +110,7 @@ export default function DashboardPage() {
   const chartOptions = {
     responsive: true,
     plugins: {
-      legend: {
-        position: "top",
-      },
+      legend: { position: "top" },
       title: {
         display: true,
         text: "Évolution des cas et des décès",
@@ -125,9 +138,7 @@ export default function DashboardPage() {
       try {
         const data = await getPandemics();
         setPandemics(data);
-        if (data.length > 0) {
-          setSelectedPandemic(data[0].id);
-        }
+        if (data.length > 0) setSelectedPandemic(data[0].id);
       } catch (error) {
         console.error("Erreur lors de la récupération des pandémies :", error);
       }
@@ -145,50 +156,38 @@ export default function DashboardPage() {
     }
   }, [selectedPandemic, selectedLocalisation]);
 
-  const updateChartData = (
-    timelineData: {
-      date: string;
-      cas_confirmes: number;
-      deces: number;
-      new_cases: number;
-      new_deaths: number;
-    }[]
-  ) => {
+  useEffect(() => {
+    if (timeline) {
+      const filtered = filterTimelineByTimeframe(timeline, selectedTimeframe);
+      updateChartData(filtered);
+    }
+  }, [selectedTimeframe, timeline]);
+
+  const filterTimelineByTimeframe = (data: any[], timeframe: string) => {
+    if (!data || data.length === 0) return [];
+
+    const len = data.length;
+
+    switch (timeframe) {
+      case "early":
+        return data.slice(0, Math.ceil(len * 0.25));
+      case "peak":
+        const start = Math.floor(len * 0.375);
+        return data.slice(start, start + Math.ceil(len * 0.25));
+      case "decline":
+        return data.slice(Math.floor(len * 0.75));
+      default:
+        return data;
+    }
+  };
+
+  const updateChartData = (timelineData: any[]) => {
     if (!timelineData || timelineData.length === 0) {
-      // Réinitialiser le graphique si pas de données
-      setChartData({
+      setChartData((prev) => ({
+        ...prev,
         labels: [],
-        datasets: [
-          {
-            label: "Cas confirmés",
-            data: [],
-            borderColor: "rgba(75, 192, 192, 1)",
-            backgroundColor: "rgba(75, 192, 192, 0.2)",
-            tension: 0.4,
-          },
-          {
-            label: "Décès",
-            data: [],
-            borderColor: "rgba(255, 99, 132, 1)",
-            backgroundColor: "rgba(255, 99, 132, 0.2)",
-            tension: 0.4,
-          },
-          {
-            label: "Nouveaux cas",
-            data: [],
-            borderColor: "rgba(54, 162, 235, 1)",
-            backgroundColor: "rgba(54, 162, 235, 0.2)",
-            tension: 0.4,
-          },
-          {
-            label: "Nouveaux décès",
-            data: [],
-            borderColor: "rgba(255, 159, 64, 1)",
-            backgroundColor: "rgba(255, 159, 64, 0.2)",
-            tension: 0.4,
-          },
-        ],
-      });
+        datasets: prev.datasets.map((ds) => ({ ...ds, data: [] })),
+      }));
       return;
     }
 
@@ -200,55 +199,35 @@ export default function DashboardPage() {
     const newCases = timelineData.map((item) => item.new_cases);
     const newDeaths = timelineData.map((item) => item.new_deaths);
 
+    setStats({
+      cas_confirmes: confirmedCases.reduce((a, b) => a + b, 0),
+      deces: deaths.reduce((a, b) => a + b, 0),
+      new_cases: newCases.reduce((a, b) => a + b, 0),
+      new_deaths: newDeaths.reduce((a, b) => a + b, 0),
+    });
+
     setChartData({
+      labels,
       datasets: [
-        {
-          label: "Cas confirmés",
-          data: confirmedCases,
-          borderColor: "rgba(75, 192, 192, 1)",
-          backgroundColor: "rgba(75, 192, 192, 0.2)",
-          tension: 0.4,
-        },
-        {
-          label: "Décès",
-          data: deaths,
-          borderColor: "rgba(255, 99, 132, 1)",
-          backgroundColor: "rgba(255, 99, 132, 0.2)",
-          tension: 0.4,
-        },
-        {
-          label: "Nouveaux cas",
-          data: newCases,
-          borderColor: "rgba(54, 162, 235, 1)",
-          backgroundColor: "rgba(54, 162, 235, 0.2)",
-          tension: 0.4,
-        },
-        {
-          label: "Nouveaux décès",
-          data: newDeaths,
-          borderColor: "rgba(255, 159, 64, 1)",
-          backgroundColor: "rgba(255, 159, 64, 0.2)",
-          tension: 0.4,
-        },
+        { ...chartData.datasets[0], data: confirmedCases },
+        { ...chartData.datasets[1], data: deaths },
+        { ...chartData.datasets[2], data: newCases },
+        { ...chartData.datasets[3], data: newDeaths },
       ],
     });
   };
-  const fetchGlobalData = async (pandemicId) => {
-    if (!pandemicId) return;
 
+  const fetchGlobalData = async (pandemicId: string) => {
     setIsLoading(true);
     try {
       const globalData = await getGlobalData(pandemicId);
-      setStats({
-        cas_confirmes: globalData.cas_confirmes || 0,
-        deces: globalData.deces || 0,
-        new_cases: globalData.new_cases || 0,
-        new_deaths: globalData.new_deaths || 0,
-      });
-
       if (globalData.timeline) {
         setTimeline(globalData.timeline);
-        updateChartData(globalData.timeline);
+        const filtered = filterTimelineByTimeframe(
+          globalData.timeline,
+          selectedTimeframe
+        );
+        updateChartData(filtered);
       }
     } catch (error) {
       console.error(
@@ -260,22 +239,17 @@ export default function DashboardPage() {
     }
   };
 
-  const fetchLocationData = async (locationId, pandemicId) => {
-    if (!locationId || !pandemicId) return;
-
+  const fetchLocationData = async (locationId: string, pandemicId: string) => {
     setIsLoading(true);
     try {
       const data = await getLocationData(locationId, pandemicId);
-      setStats({
-        cas_confirmes: data.cas_confirmes || 0,
-        deces: data.deces || 0,
-        new_cases: data.new_cases || 0,
-        new_deaths: data.new_deaths || 0,
-      });
-
       if (data.timeline) {
         setTimeline(data.timeline);
-        updateChartData(data.timeline);
+        const filtered = filterTimelineByTimeframe(
+          data.timeline,
+          selectedTimeframe
+        );
+        updateChartData(filtered);
       }
     } catch (error) {
       console.error(
@@ -287,68 +261,60 @@ export default function DashboardPage() {
     }
   };
 
-  const handleLocalisationChange = (localisationId) => {
-    setSelectedLocalisation(localisationId);
-
+  const handleLocalisationChange = (localisationId: string) => {
     if (localisationId === "global") {
       setSelectedLocalisation(null);
-      fetchGlobalData(selectedPandemic);
-      return;
+    } else {
+      setSelectedLocalisation(localisationId);
     }
-
-    fetchLocationData(localisationId, selectedPandemic);
   };
 
-  const handleLocationClick = (data, locationId) => {
+  const handleLocationClick = (_: any, locationId: string) => {
     setSelectedLocalisation(locationId);
-    fetchLocationData(locationId, selectedPandemic);
+    if (selectedPandemic) {
+      fetchLocationData(locationId, selectedPandemic);
+    }
   };
 
   return (
     <div className="flex min-h-screen w-full flex-col">
       <HeaderComponent />
-
       <main className="mt-[5rem] flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
+        {/* Selects */}
         <div className="flex items-center gap-4">
           <Select
             value={selectedPandemic || ""}
-            onValueChange={(value) => setSelectedPandemic(value)}
+            onValueChange={setSelectedPandemic}
           >
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Sélectionner une pandémie" />
             </SelectTrigger>
             <SelectContent>
-              {pandemics.length > 0 ? (
-                pandemics.map((pandemie) => (
-                  <SelectItem key={pandemie.id} value={pandemie.id}>
-                    {pandemie.nom_pandemie}
-                  </SelectItem>
-                ))
-              ) : (
-                <SelectItem disabled>Aucune pandémie disponible</SelectItem>
-              )}
+              {pandemics.map((p) => (
+                <SelectItem key={p.id} value={p.id}>
+                  {p.nom_pandemie}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
+
           <Select
-            value={selectedLocalisation || ""}
-            onValueChange={(value) => handleLocalisationChange(value)}
+            value={selectedLocalisation || "global"}
+            onValueChange={handleLocalisationChange}
           >
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Sélectionner une localisation" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="global">Global</SelectItem>
-              {localisations.length > 0 ? (
-                localisations.map((location) => (
-                  <SelectItem key={location.id} value={location.id}>
-                    {location.country || location.nom}{" "}
-                  </SelectItem>
-                ))
-              ) : (
-                <SelectItem disabled>Aucune localisation disponible</SelectItem>
-              )}
+              {localisations.map((l) => (
+                <SelectItem key={l.id} value={l.id}>
+                  {l.country || l.nom}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
+
           <Select
             value={selectedTimeframe}
             onValueChange={setSelectedTimeframe}
@@ -363,7 +329,8 @@ export default function DashboardPage() {
               <SelectItem value="decline">Phase de déclin</SelectItem>
             </SelectContent>
           </Select>
-          <div className="ml-auto flex items-center gap-4">
+
+          <div className="ml-auto">
             <Button variant="outline" disabled={!selectedPandemic}>
               Exporter les données
             </Button>
@@ -522,7 +489,7 @@ export default function DashboardPage() {
           <TabsContent value="timeline" className="border rounded-md p-4">
             {timeline && timeline.length > 0 ? (
               <div className="space-y-4">
-                {timeline.map((item, index) => (
+                {timeline.map((item: any, index: number) => (
                   <div key={index} className="border-b pb-2">
                     <h3 className="font-medium">
                       {new Date(item.date).toLocaleDateString()}
