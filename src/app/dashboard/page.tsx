@@ -41,7 +41,6 @@ ChartJS.register(
   Legend
 );
 
-// Définir un type pour les données des datasets
 type ChartDataset = {
   label: string;
   data: number[];
@@ -50,7 +49,6 @@ type ChartDataset = {
   tension: number;
 };
 
-// Définir un type pour les données du chart
 type ChartData = {
   labels: string[];
   datasets: ChartDataset[];
@@ -72,6 +70,7 @@ export default function DashboardPage() {
   });
   const [timeline, setTimeline] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const [chartData, setChartData] = useState<ChartData>({
     labels: [],
@@ -110,7 +109,7 @@ export default function DashboardPage() {
   const chartOptions = {
     responsive: true,
     plugins: {
-      legend: { position: "top" },
+      legend: { position: "top" as const },
       title: {
         display: true,
         text: "Évolution des cas et des décès",
@@ -122,12 +121,14 @@ export default function DashboardPage() {
     async function fetchLocalisations() {
       try {
         const data = await getAllLocations();
-        setLocalisations(data);
+        console.log("Localisations récupérées:", data);
+        setLocalisations(data || []);
       } catch (error) {
         console.error(
           "Erreur lors de la récupération des localisations :",
           error
         );
+        setError("Erreur lors du chargement des localisations");
       }
     }
     fetchLocalisations();
@@ -137,10 +138,15 @@ export default function DashboardPage() {
     async function fetchPandemics() {
       try {
         const data = await getPandemics();
-        setPandemics(data);
-        if (data.length > 0) setSelectedPandemic(data[0].id);
+        console.log("Pandémies récupérées:", data);
+        setPandemics(data || []);
+        if (data && data.length > 0) {
+          console.log("Sélection de la pandémie par défaut:", data[0].id);
+          setSelectedPandemic(data[0].id);
+        }
       } catch (error) {
         console.error("Erreur lors de la récupération des pandémies :", error);
+        setError("Erreur lors du chargement des pandémies");
       }
     }
     fetchPandemics();
@@ -148,9 +154,12 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (selectedPandemic) {
+      console.log("Pandemic sélectionnée:", selectedPandemic);
       if (selectedLocalisation) {
+        console.log("Localisation sélectionnée:", selectedLocalisation);
         fetchLocationData(selectedLocalisation, selectedPandemic);
       } else {
+        console.log("Récupération des données globales");
         fetchGlobalData(selectedPandemic);
       }
     }
@@ -158,6 +167,10 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (timeline) {
+      console.log(
+        "Timeline mise à jour, application du filtre:",
+        selectedTimeframe
+      );
       const filtered = filterTimelineByTimeframe(timeline, selectedTimeframe);
       updateChartData(filtered);
     }
@@ -167,6 +180,11 @@ export default function DashboardPage() {
     if (!data || data.length === 0) return [];
 
     const len = data.length;
+
+    console.log(
+      `Filtrage de la timeline (${len} entrées) par période:`,
+      timeframe
+    );
 
     switch (timeframe) {
       case "early":
@@ -181,8 +199,18 @@ export default function DashboardPage() {
     }
   };
 
+  const normalizeData = (item: any, property: string): number => {
+    const value = item[property];
+    if (value === null || value === undefined) return 0;
+    const numberValue = Number(value);
+    return isNaN(numberValue) ? 0 : numberValue;
+  };
+
   const updateChartData = (timelineData: any[]) => {
+    console.log("Mise à jour des données du graphique:", timelineData);
+
     if (!timelineData || timelineData.length === 0) {
+      console.warn("Aucune donnée de timeline disponible");
       setChartData((prev) => ({
         ...prev,
         labels: [],
@@ -191,20 +219,53 @@ export default function DashboardPage() {
       return;
     }
 
-    const labels = timelineData.map((item) =>
-      new Date(item.date).toLocaleDateString()
-    );
-    const confirmedCases = timelineData.map((item) => item.cas_confirmes);
-    const deaths = timelineData.map((item) => item.deces);
-    const newCases = timelineData.map((item) => item.new_cases);
-    const newDeaths = timelineData.map((item) => item.new_deaths);
-
-    setStats({
-      cas_confirmes: confirmedCases.reduce((a, b) => a + b, 0),
-      deces: deaths.reduce((a, b) => a + b, 0),
-      new_cases: newCases.reduce((a, b) => a + b, 0),
-      new_deaths: newDeaths.reduce((a, b) => a + b, 0),
+    const labels = timelineData.map((item) => {
+      try {
+        return new Date(item.date).toLocaleDateString();
+      } catch (e) {
+        console.error("Date invalide:", item.date);
+        return "Date invalide";
+      }
     });
+
+    const confirmedCases = timelineData.map((item) =>
+      normalizeData(item, "cas_confirmes")
+    );
+    const deaths = timelineData.map((item) => normalizeData(item, "deces"));
+    const newCases = timelineData.map((item) =>
+      normalizeData(item, "new_cases")
+    );
+    const newDeaths = timelineData.map((item) =>
+      normalizeData(item, "new_deaths")
+    );
+
+    console.log("Données préparées:", {
+      labels,
+      confirmedCases,
+      deaths,
+      newCases,
+      newDeaths,
+    });
+
+    // Utiliser la dernière valeur non nulle pour chaque statistique
+    const getLastNonZeroValue = (values: number[]) => {
+      for (let i = values.length - 1; i >= 0; i--) {
+        if (values[i] !== null && values[i] !== 0) {
+          return values[i];
+        }
+      }
+      return 0;
+    };
+
+    const statsUpdate = {
+      cas_confirmes: getLastNonZeroValue(confirmedCases),
+      deces: getLastNonZeroValue(deaths),
+      new_cases: getLastNonZeroValue(newCases),
+      new_deaths: getLastNonZeroValue(newDeaths),
+    };
+
+    console.log("Mise à jour des statistiques:", statsUpdate);
+    setStats(statsUpdate);
 
     setChartData({
       labels,
@@ -219,21 +280,45 @@ export default function DashboardPage() {
 
   const fetchGlobalData = async (pandemicId: string) => {
     setIsLoading(true);
+    setError(null);
     try {
+      console.log("Récupération des données globales pour:", pandemicId);
       const globalData = await getGlobalData(pandemicId);
-      if (globalData.timeline) {
+      console.log("Données globales reçues:", globalData);
+
+      if (!globalData) {
+        throw new Error("Aucune donnée reçue");
+      }
+
+      if (globalData.timeline && Array.isArray(globalData.timeline)) {
+        console.log(
+          `Timeline globale reçue: ${globalData.timeline.length} entrées`
+        );
         setTimeline(globalData.timeline);
         const filtered = filterTimelineByTimeframe(
           globalData.timeline,
           selectedTimeframe
         );
         updateChartData(filtered);
+      } else if (Array.isArray(globalData)) {
+        // Si les données sont directement un tableau
+        console.log(`Timeline globale directe: ${globalData.length} entrées`);
+        setTimeline(globalData);
+        const filtered = filterTimelineByTimeframe(
+          globalData,
+          selectedTimeframe
+        );
+        updateChartData(filtered);
+      } else {
+        console.error("Format de données invalide:", globalData);
+        setError("Format de données invalide");
       }
     } catch (error) {
       console.error(
         "Erreur lors de la récupération des données globales:",
         error
       );
+      setError("Erreur lors du chargement des données globales");
     } finally {
       setIsLoading(false);
     }
@@ -241,27 +326,51 @@ export default function DashboardPage() {
 
   const fetchLocationData = async (locationId: string, pandemicId: string) => {
     setIsLoading(true);
+    setError(null);
     try {
+      console.log(
+        `Récupération des données pour localisation ${locationId} et pandémie ${pandemicId}`
+      );
       const data = await getLocationData(locationId, pandemicId);
-      if (data.timeline) {
+      console.log("Données de localisation reçues:", data);
+
+      if (!data) {
+        throw new Error("Aucune donnée reçue");
+      }
+
+      if (data.timeline && Array.isArray(data.timeline)) {
+        console.log(
+          `Timeline de localisation reçue: ${data.timeline.length} entrées`
+        );
         setTimeline(data.timeline);
         const filtered = filterTimelineByTimeframe(
           data.timeline,
           selectedTimeframe
         );
         updateChartData(filtered);
+      } else if (Array.isArray(data)) {
+        // Si les données sont directement un tableau
+        console.log(`Timeline de localisation directe: ${data.length} entrées`);
+        setTimeline(data);
+        const filtered = filterTimelineByTimeframe(data, selectedTimeframe);
+        updateChartData(filtered);
+      } else {
+        console.error("Format de données invalide:", data);
+        setError("Format de données invalide");
       }
     } catch (error) {
       console.error(
         "Erreur lors de la récupération des données de localisation:",
         error
       );
+      setError("Erreur lors du chargement des données de localisation");
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleLocalisationChange = (localisationId: string) => {
+    console.log("Changement de localisation:", localisationId);
     if (localisationId === "global") {
       setSelectedLocalisation(null);
     } else {
@@ -270,6 +379,7 @@ export default function DashboardPage() {
   };
 
   const handleLocationClick = (_: any, locationId: string) => {
+    console.log("Clic sur la localisation:", locationId);
     setSelectedLocalisation(locationId);
     if (selectedPandemic) {
       fetchLocationData(locationId, selectedPandemic);
@@ -277,9 +387,19 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="flex min-h-screen w-full flex-col">
+    <div
+      className="flex min-h-screen w-fu
+    ll flex-col"
+    >
       <HeaderComponent />
       <main className="mt-[5rem] flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
+        {/* Message d'erreur */}
+        {error && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+            {error}
+          </div>
+        )}
+
         {/* Selects */}
         <div className="flex items-center gap-4">
           <Select
@@ -292,7 +412,7 @@ export default function DashboardPage() {
             <SelectContent>
               {pandemics.map((p) => (
                 <SelectItem key={p.id} value={p.id}>
-                  {p.nom_pandemie}
+                  {p.type}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -307,9 +427,9 @@ export default function DashboardPage() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="global">Global</SelectItem>
-              {localisations.map((l) => (
-                <SelectItem key={l.id} value={l.id}>
-                  {l.country || l.nom}
+              {(Array.isArray(localisations) ? localisations : []).map((l) => (
+                <SelectItem key={l.id || Math.random()} value={l.id}>
+                  {l.country || l.nom || "Sans nom"}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -349,7 +469,10 @@ export default function DashboardPage() {
               ) : (
                 <>
                   <div className="text-2xl font-bold">
-                    {stats.cas_confirmes.toLocaleString()}
+                    {(typeof stats.cas_confirmes === "number"
+                      ? stats.cas_confirmes
+                      : 0
+                    ).toLocaleString()}
                   </div>
                   <p className="text-sm text-muted-foreground">
                     {selectedLocalisation
@@ -380,7 +503,10 @@ export default function DashboardPage() {
               ) : (
                 <>
                   <div className="text-2xl font-bold">
-                    {stats.deces.toLocaleString()}
+                    {(typeof stats.deces === "number"
+                      ? stats.deces
+                      : 0
+                    ).toLocaleString()}
                   </div>
                   <p className="text-sm text-muted-foreground">
                     {selectedLocalisation
@@ -411,7 +537,10 @@ export default function DashboardPage() {
               ) : (
                 <>
                   <div className="text-2xl font-bold">
-                    {stats.new_cases.toLocaleString()}
+                    {(typeof stats.new_cases === "number"
+                      ? stats.new_cases
+                      : 0
+                    ).toLocaleString()}
                   </div>
                   <p className="text-sm text-muted-foreground">
                     {selectedLocalisation
@@ -442,7 +571,10 @@ export default function DashboardPage() {
               ) : (
                 <>
                   <div className="text-2xl font-bold">
-                    {stats.new_deaths.toLocaleString()}
+                    {(typeof stats.new_deaths === "number"
+                      ? stats.new_deaths
+                      : 0
+                    ).toLocaleString()}
                   </div>
                   <p className="text-sm text-muted-foreground">
                     {selectedLocalisation
@@ -489,50 +621,73 @@ export default function DashboardPage() {
           <TabsContent value="timeline" className="border rounded-md p-4">
             {timeline && timeline.length > 0 ? (
               <div className="space-y-4">
-                {timeline.map((item: any, index: number) => (
-                  <div key={index} className="border-b pb-2">
-                    <h3 className="font-medium">
-                      {new Date(item.date).toLocaleDateString()}
-                    </h3>
-                    <div className="grid grid-cols-2 gap-2 mt-2">
-                      <div>
-                        <span className="text-sm text-muted-foreground">
-                          Cas confirmés:
-                        </span>
-                        <span className="ml-2 font-medium">
-                          {item.cas_confirmes.toLocaleString()}
-                        </span>
-                      </div>
-                      <div>
-                        <span className="text-sm text-muted-foreground">
-                          Décès:
-                        </span>
-                        <span className="ml-2 font-medium">
-                          {item.deces.toLocaleString()}
-                        </span>
-                      </div>
-                      <div>
-                        <span className="text-sm text-muted-foreground">
-                          Nouveaux cas:
-                        </span>
-                        <span className="ml-2 font-medium">
-                          {item.new_cases.toLocaleString()}
-                        </span>
-                      </div>
-                      <div>
-                        <span className="text-sm text-muted-foreground">
-                          Nouveaux décès:
-                        </span>
-                        <span className="ml-2 font-medium">
-                          {item.new_deaths.toLocaleString()}
-                        </span>
+                {timeline.map((item: any, index: number) => {
+                  // Sécuriser les valeurs pour éviter les erreurs
+                  const safeValue = (value: any) => {
+                    if (value === null || value === undefined) return 0;
+                    return isNaN(Number(value)) ? 0 : Number(value);
+                  };
+
+                  const cas_confirmes = safeValue(item.cas_confirmes);
+                  const deces = safeValue(item.deces);
+                  const new_cases = safeValue(item.new_cases);
+                  const new_deaths = safeValue(item.new_deaths);
+
+                  // Formater la date
+                  let formattedDate;
+                  try {
+                    formattedDate = new Date(item.date).toLocaleDateString();
+                  } catch (e) {
+                    formattedDate = "Date invalide";
+                  }
+
+                  return (
+                    <div key={index} className="border-b pb-2">
+                      <h3 className="font-medium">{formattedDate}</h3>
+                      <div className="grid grid-cols-2 gap-2 mt-2">
+                        <div>
+                          <span className="text-sm text-muted-foreground">
+                            Cas confirmés:
+                          </span>
+                          <span className="ml-2 font-medium">
+                            {cas_confirmes.toLocaleString()}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-sm text-muted-foreground">
+                            Décès:
+                          </span>
+                          <span className="ml-2 font-medium">
+                            {deces.toLocaleString()}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-sm text-muted-foreground">
+                            Nouveaux cas:
+                          </span>
+                          <span className="ml-2 font-medium">
+                            {new_cases.toLocaleString()}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-sm text-muted-foreground">
+                            Nouveaux décès:
+                          </span>
+                          <span className="ml-2 font-medium">
+                            {new_deaths.toLocaleString()}
+                          </span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             ) : (
-              <div>Aucune donnée chronologique disponible</div>
+              <div className="text-center py-8">
+                {isLoading
+                  ? "Chargement des données chronologiques..."
+                  : "Aucune donnée chronologique disponible"}
+              </div>
             )}
           </TabsContent>
         </Tabs>

@@ -7,59 +7,110 @@ const api = axios.create({
 export const getPandemics = async () => {
   try {
     const response = await api.get("/pandemie");
-    return response.data;
+    return Array.isArray(response.data) ? response.data : [];
   } catch (error) {
     console.error("Erreur lors de la récupération des pandémies :", error);
-    throw error;
+    return [];
   }
 };
 
 export const getAllLocations = async () => {
   try {
     const response = await api.get("/location");
-    return response.data;
+    let data = response.data;
+
+    // Si la réponse est une chaîne, essayez de la parser
+    if (typeof data === "string") {
+      try {
+        data = JSON.parse(data);
+      } catch (e) {
+        console.error("Impossible de parser les données de localisation:", e);
+        return []; // Retourner un tableau vide en cas d'erreur
+      }
+    }
+
+    // Assurez-vous que data est un tableau
+    if (!Array.isArray(data)) {
+      console.error(
+        "Les données de localisation ne sont pas un tableau:",
+        data
+      );
+
+      // Si data est un objet, essayez d'extraire un tableau
+      if (data && typeof data === "object") {
+        // Essayez différentes propriétés qui pourraient contenir un tableau
+        if (Array.isArray(data.content)) return data.content;
+        if (Array.isArray(data.locations)) return data.locations;
+        if (Array.isArray(data.items)) return data.items;
+
+        // Dernier recours: convertir l'objet en tableau
+        return Object.values(data).filter(
+          (item) => item && typeof item === "object"
+        );
+      }
+
+      return []; // Retourner un tableau vide en cas d'échec
+    }
+
+    // Simplifier la structure des données pour éviter les références circulaires
+    return data.map((location) => ({
+      id: location.id,
+      country: location.country || location.nom,
+      continent: location.continent,
+      latitude: location.latitude,
+      longitude: location.longitude,
+      // Ne pas inclure les propriétés qui créent des références circulaires
+    }));
   } catch (error) {
     console.error("Erreur lors de la récupération des localisations :", error);
-    throw error;
+    return []; // Retourner un tableau vide en cas d'erreur
   }
 };
 
 export const getAllData = async () => {
   try {
     const response = await api.get("/data");
-    return response.data;
+    return Array.isArray(response.data) ? response.data : [];
   } catch (error) {
     console.error("Erreur lors de la récupération des données :", error);
-    throw error;
+    return [];
   }
 };
 
 export const getGlobalData = async (pandemicId) => {
   try {
     const response = await api.get("/data");
-    const allData = response.data;
+    const allData = Array.isArray(response.data) ? response.data : [];
+    console.log("Données brutes reçues :", allData);
 
+    // Filtrer les données en vérifiant la structure
     const pandemicData = allData.filter(
-      (item) => item.pandemie.id === pandemicId
+      (item) => item && item.pandemie && item.pandemie.id === pandemicId
     );
+    console.log("Données filtrées par pandémie :", pandemicData);
 
     const totalCases = pandemicData.reduce(
-      (sum, item) => sum + item.totalCases,
+      (sum, item) => sum + (item.totalCases || 0),
       0
     );
     const totalDeaths = pandemicData.reduce(
-      (sum, item) => sum + item.totalDeaths,
+      (sum, item) => sum + (item.totalDeaths || 0),
       0
     );
-    const newCases = pandemicData.reduce((sum, item) => sum + item.newCases, 0);
+    const newCases = pandemicData.reduce(
+      (sum, item) => sum + (item.newCases || 0),
+      0
+    );
     const newDeaths = pandemicData.reduce(
-      (sum, item) => sum + item.newDeaths,
+      (sum, item) => sum + (item.newDeaths || 0),
       0
     );
 
     const timelineMap = new Map();
 
     pandemicData.forEach((item) => {
+      if (!item || !item.calendrier || !item.calendrier.date) return;
+
       const date = item.calendrier.date;
 
       if (!timelineMap.has(date)) {
@@ -73,15 +124,16 @@ export const getGlobalData = async (pandemicId) => {
       }
 
       const dayData = timelineMap.get(date);
-      dayData.cas_confirmes += item.totalCases;
-      dayData.deces += item.totalDeaths;
-      dayData.new_cases += item.newCases;
-      dayData.new_deaths += item.newDeaths;
+      dayData.cas_confirmes += item.totalCases || 0;
+      dayData.deces += item.totalDeaths || 0;
+      dayData.new_cases += item.newCases || 0;
+      dayData.new_deaths += item.newDeaths || 0;
     });
 
     const timeline = Array.from(timelineMap.values()).sort(
       (a, b) => new Date(a.date) - new Date(b.date)
     );
+    console.log("Données de la timeline :", timeline);
 
     return {
       cas_confirmes: totalCases,
@@ -95,74 +147,65 @@ export const getGlobalData = async (pandemicId) => {
       "Erreur lors de la récupération des données globales :",
       error
     );
-    throw error;
+    return {
+      cas_confirmes: 0,
+      deces: 0,
+      new_cases: 0,
+      new_deaths: 0,
+      timeline: [],
+    };
   }
 };
 
 export const getLocationData = async (locationId, pandemicId) => {
   try {
-    const response = await api.get("/data");
-    const allData = response.data;
-
-    const locationData = allData.filter(
-      (item) =>
-        item.localisation.id === locationId &&
-        (pandemicId ? item.pandemie.id === pandemicId : true)
+    console.log(
+      `Appel API pour localisation ${locationId} et pandémie ${pandemicId}`
     );
 
-    const totalCases = locationData.reduce(
-      (sum, item) => sum + item.totalCases,
-      0
-    );
-    const totalDeaths = locationData.reduce(
-      (sum, item) => sum + item.totalDeaths,
-      0
-    );
-    const newCases = locationData.reduce((sum, item) => sum + item.newCases, 0);
-    const newDeaths = locationData.reduce(
-      (sum, item) => sum + item.newDeaths,
-      0
-    );
+    // Assurez-vous que les IDs sont correctement formatés
+    const locId = Number(locationId);
+    const pandId = Number(pandemicId);
 
-    const timelineMap = new Map();
+    // Utilisez un endpoint spécifique pour les données de timeline par localisation
+    const response = await api.get(`/data/timeline/${pandId}/${locId}`);
 
-    locationData.forEach((item) => {
-      const date = item.calendrier.date;
+    console.log("Réponse API pour localisation:", response.data);
 
-      if (!timelineMap.has(date)) {
-        timelineMap.set(date, {
-          date,
-          cas_confirmes: 0,
-          deces: 0,
-          new_cases: 0,
-          new_deaths: 0,
-        });
-      }
-
-      const dayData = timelineMap.get(date);
-      dayData.cas_confirmes += item.totalCases;
-      dayData.deces += item.totalDeaths;
-      dayData.new_cases += item.newCases;
-      dayData.new_deaths += item.newDeaths;
-    });
-
-    const timeline = Array.from(timelineMap.values()).sort(
-      (a, b) => new Date(a.date) - new Date(b.date)
-    );
+    // Si vous n'avez pas d'endpoint spécifique, filtrez les données côté client
+    if (!response.data || response.data.length === 0) {
+      console.warn("Aucune donnée reçue pour cette localisation");
+      return {
+        cas_confirmes: 0,
+        deces: 0,
+        new_cases: 0,
+        new_deaths: 0,
+        timeline: [],
+      };
+    }
 
     return {
-      cas_confirmes: totalCases,
-      deces: totalDeaths,
-      new_cases: newCases,
-      new_deaths: newDeaths,
-      timeline,
+      cas_confirmes: response.data.reduce(
+        (sum, item) => sum + item.cas_confirmes,
+        0
+      ),
+      deces: response.data.reduce((sum, item) => sum + item.deces, 0),
+      new_cases: response.data.reduce((sum, item) => sum + item.new_cases, 0),
+      new_deaths: response.data.reduce((sum, item) => sum + item.new_deaths, 0),
+      timeline: response.data,
     };
   } catch (error) {
     console.error(
-      "Erreur lors de la récupération des données de localisation :",
+      "Erreur lors de la récupération des données de localisation:",
       error
     );
-    throw error;
+    return {
+      cas_confirmes: 0,
+      deces: 0,
+      new_cases: 0,
+      new_deaths: 0,
+      timeline: [],
+    };
   }
 };
 
