@@ -83,56 +83,49 @@ export const getGlobalData = async (pandemicId) => {
     const allData = Array.isArray(response.data) ? response.data : [];
     console.log("Données brutes reçues :", allData);
 
-    // Filtrer les données en vérifiant la structure
     const pandemicData = allData.filter(
-      (item) => item && item.pandemie && item.pandemie.id === pandemicId
+      (item) => item && item.id_pandemie === Number(pandemicId)
     );
     console.log("Données filtrées par pandémie :", pandemicData);
 
     const totalCases = pandemicData.reduce(
-      (sum, item) => sum + (item.totalCases || 0),
+      (sum, item) => sum + (item.total_cases || 0),
       0
     );
     const totalDeaths = pandemicData.reduce(
-      (sum, item) => sum + (item.totalDeaths || 0),
+      (sum, item) => sum + (item.total_deaths || 0),
       0
     );
     const newCases = pandemicData.reduce(
-      (sum, item) => sum + (item.newCases || 0),
+      (sum, item) => sum + (item.new_cases || 0),
       0
     );
     const newDeaths = pandemicData.reduce(
-      (sum, item) => sum + (item.newDeaths || 0),
+      (sum, item) => sum + (item.new_deaths || 0),
       0
     );
 
     const timelineMap = new Map();
-
     pandemicData.forEach((item) => {
-      if (!item || !item.calendrier || !item.calendrier.date) return;
-
-      const date = item.calendrier.date;
-
-      if (!timelineMap.has(date)) {
-        timelineMap.set(date, {
-          date,
+      if (!item || !item.id_calendar) return;
+      const calendarId = item.id_calendar;
+      if (!timelineMap.has(calendarId)) {
+        timelineMap.set(calendarId, {
+          id_calendar: calendarId,
           cas_confirmes: 0,
           deces: 0,
           new_cases: 0,
           new_deaths: 0,
         });
       }
-
-      const dayData = timelineMap.get(date);
-      dayData.cas_confirmes += item.totalCases || 0;
-      dayData.deces += item.totalDeaths || 0;
-      dayData.new_cases += item.newCases || 0;
-      dayData.new_deaths += item.newDeaths || 0;
+      const dayData = timelineMap.get(calendarId);
+      dayData.cas_confirmes += item.total_cases || 0;
+      dayData.deces += item.total_deaths || 0;
+      dayData.new_cases += item.new_cases || 0;
+      dayData.new_deaths += item.new_deaths || 0;
     });
 
-    const timeline = Array.from(timelineMap.values()).sort(
-      (a, b) => new Date(a.date) - new Date(b.date)
-    );
+    const timeline = Array.from(timelineMap.values());
     console.log("Données de la timeline :", timeline);
 
     return {
@@ -162,37 +155,36 @@ export const getLocationData = async (locationId, pandemicId) => {
     console.log(
       `Appel API pour localisation ${locationId} et pandémie ${pandemicId}`
     );
+    const response = await api.get(`/data`);
+    const allData = Array.isArray(response.data) ? response.data : [];
 
-    // Assurez-vous que les IDs sont correctement formatés
-    const locId = Number(locationId);
-    const pandId = Number(pandemicId);
+    const filteredData = allData.filter(
+      (item) =>
+        item &&
+        item.id_pandemie === Number(pandemicId) &&
+        item.id_location === Number(locationId)
+    );
 
-    // Utilisez un endpoint spécifique pour les données de timeline par localisation
-    const response = await api.get(`/data/timeline/${pandId}/${locId}`);
-
-    console.log("Réponse API pour localisation:", response.data);
-
-    // Si vous n'avez pas d'endpoint spécifique, filtrez les données côté client
-    if (!response.data || response.data.length === 0) {
-      console.warn("Aucune donnée reçue pour cette localisation");
-      return {
-        cas_confirmes: 0,
-        deces: 0,
-        new_cases: 0,
-        new_deaths: 0,
-        timeline: [],
-      };
-    }
+    console.log("Données filtrées par localisation:", filteredData);
 
     return {
-      cas_confirmes: response.data.reduce(
-        (sum, item) => sum + item.cas_confirmes,
+      cas_confirmes: filteredData.reduce(
+        (sum, item) => sum + (item.total_cases || 0),
         0
       ),
-      deces: response.data.reduce((sum, item) => sum + item.deces, 0),
-      new_cases: response.data.reduce((sum, item) => sum + item.new_cases, 0),
-      new_deaths: response.data.reduce((sum, item) => sum + item.new_deaths, 0),
-      timeline: response.data,
+      deces: filteredData.reduce(
+        (sum, item) => sum + (item.total_deaths || 0),
+        0
+      ),
+      new_cases: filteredData.reduce(
+        (sum, item) => sum + (item.new_cases || 0),
+        0
+      ),
+      new_deaths: filteredData.reduce(
+        (sum, item) => sum + (item.new_deaths || 0),
+        0
+      ),
+      timeline: filteredData,
     };
   } catch (error) {
     console.error(
