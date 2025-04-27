@@ -234,7 +234,7 @@ export default function DashboardPage() {
       normalizeData(item, "totalCases")
     );
     const deaths = timelineData.map((item) => normalizeData(item, "totalDeaths"));
-    
+
     const newCases = timelineData.map((item) =>
       normalizeData(item, "newCases")
     );
