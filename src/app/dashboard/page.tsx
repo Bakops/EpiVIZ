@@ -223,7 +223,7 @@ export default function DashboardPage() {
     const labels = timelineData.map((item) => {
       console.log("Clés de l'objet item:", Object.keys(item));
       try {
-        return new Date(item.date_value).toLocaleDateString();
+        return new Date(item.dateValue).toLocaleDateString();
       } catch (e) {
         console.error("Date invalide:", item.date);
         return "Date invalide";
@@ -231,15 +231,15 @@ export default function DashboardPage() {
     });
 
     const confirmedCases = timelineData.map((item) =>
-      normalizeData(item, "cas_confirmes")
+      normalizeData(item, "totalCases")
     );
-    const deaths = timelineData.map((item) => normalizeData(item, "deces"));
+    const deaths = timelineData.map((item) => normalizeData(item, "totalDeaths"));
     
     const newCases = timelineData.map((item) =>
-      normalizeData(item, "new_cases")
+      normalizeData(item, "newCases")
     );
     const newDeaths = timelineData.map((item) =>
-      normalizeData(item, "new_deaths")
+      normalizeData(item, "newDeaths")
     );
 
     console.log("Données préparées:", {

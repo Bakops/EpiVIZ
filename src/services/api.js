@@ -111,20 +111,20 @@ export const getGlobalData = async (pandemicId) => {
       const dateValue = item.dateValue;
       if (!timelineMap.has(dateValue)) {
         timelineMap.set(dateValue, {
-          date_value: dateValue,
-          cas_confirmes: 0,
-          deces: 0,
-          new_cases: 0,
-          new_deaths: 0,
+          dateValue: dateValue,
+          totalCases: 0,
+          totalDeaths: 0,
+          newCases: 0,
+          newDeaths: 0,
           idCalendar: 0,
         });
       }
       const dayData = timelineMap.get(dateValue);
 
-      dayData.cas_confirmes += item.totalCases || 0;
-      dayData.deces += item.totalDeaths || 0;
-      dayData.new_cases += item.newCases || 0;
-      dayData.new_deaths += item.newDeaths || 0;
+      dayData.totalCases += item.totalCases || 0;
+      dayData.totalDeaths += item.totalDeaths || 0;
+      dayData.newCases += item.newCases || 0;
+      dayData.newDeaths += item.newDeaths || 0;
       dayData.idCalendar = item.idCalendar || 0;
     });
 
