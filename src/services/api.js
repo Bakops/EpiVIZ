@@ -84,45 +84,48 @@ export const getGlobalData = async (pandemicId) => {
     console.log("Données brutes reçues :", allData);
 
     const pandemicData = allData.filter(
-      (item) => item && item.id_pandemie === Number(pandemicId)
+      (item) => item && item.idPandemic === Number(pandemicId)
     );
     console.log("Données filtrées par pandémie :", pandemicData);
 
     const totalCases = pandemicData.reduce(
-      (sum, item) => sum + (item.total_cases || 0),
+      (sum, item) => sum + (item.totalCases || 0),
       0
     );
     const totalDeaths = pandemicData.reduce(
-      (sum, item) => sum + (item.total_deaths || 0),
+      (sum, item) => sum + (item.totalDeaths || 0),
       0
     );
     const newCases = pandemicData.reduce(
-      (sum, item) => sum + (item.new_cases || 0),
+      (sum, item) => sum + (item.newCases || 0),
       0
     );
     const newDeaths = pandemicData.reduce(
-      (sum, item) => sum + (item.new_deaths || 0),
+      (sum, item) => sum + (item.newDeaths || 0),
       0
     );
 
     const timelineMap = new Map();
     pandemicData.forEach((item) => {
-      if (!item || !item.id_calendar) return;
-      const calendarId = item.id_calendar;
-      if (!timelineMap.has(calendarId)) {
-        timelineMap.set(calendarId, {
-          id_calendar: calendarId,
+      if (!item || !item.dateValue) return;
+      const dateValue = item.dateValue;
+      if (!timelineMap.has(dateValue)) {
+        timelineMap.set(dateValue, {
+          date_value: dateValue,
           cas_confirmes: 0,
           deces: 0,
           new_cases: 0,
           new_deaths: 0,
+          idCalendar: 0,
         });
       }
-      const dayData = timelineMap.get(calendarId);
-      dayData.cas_confirmes += item.total_cases || 0;
-      dayData.deces += item.total_deaths || 0;
-      dayData.new_cases += item.new_cases || 0;
-      dayData.new_deaths += item.new_deaths || 0;
+      const dayData = timelineMap.get(dateValue);
+
+      dayData.cas_confirmes += item.totalCases || 0;
+      dayData.deces += item.totalDeaths || 0;
+      dayData.new_cases += item.newCases || 0;
+      dayData.new_deaths += item.newDeaths || 0;
+      dayData.idCalendar = item.idCalendar || 0;
     });
 
     const timeline = Array.from(timelineMap.values());
@@ -157,31 +160,31 @@ export const getLocationData = async (locationId, pandemicId) => {
     );
     const response = await api.get(`/data`);
     const allData = Array.isArray(response.data) ? response.data : [];
-
+    console.log(allData)
     const filteredData = allData.filter(
       (item) =>
         item &&
-        item.id_pandemie === Number(pandemicId) &&
-        item.id_location === Number(locationId)
+        item.idPandemic === Number(pandemicId) &&
+        item.idLocation === Number(locationId)
     );
 
     console.log("Données filtrées par localisation:", filteredData);
 
     return {
       cas_confirmes: filteredData.reduce(
-        (sum, item) => sum + (item.total_cases || 0),
+        (sum, item) => sum + (item.totalCases || 0),
         0
       ),
       deces: filteredData.reduce(
-        (sum, item) => sum + (item.total_deaths || 0),
+        (sum, item) => sum + (item.totalDeaths || 0),
         0
       ),
       new_cases: filteredData.reduce(
-        (sum, item) => sum + (item.new_cases || 0),
+        (sum, item) => sum + (item.newCases || 0),
         0
       ),
       new_deaths: filteredData.reduce(
-        (sum, item) => sum + (item.new_deaths || 0),
+        (sum, item) => sum + (item.newDeaths || 0),
         0
       ),
       timeline: filteredData,
