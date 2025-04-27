@@ -119,8 +119,6 @@ export async function fetchDataFromSource(sourceId: string, params: any = {}): P
   // Implémentation simulée
   // Dans une application réelle, cela ferait des appels API ou des requêtes à des bases de données
 
-  console.log(`Récupération des données depuis ${sourceId} avec paramètres:`, params)
-
   // Simulation de délai réseau
   await new Promise((resolve) => setTimeout(resolve, 1000))
 

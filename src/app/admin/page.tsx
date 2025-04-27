@@ -1,10 +1,7 @@
 "use client";
 
 import {
-  createCalendrier,
   createData,
-  createLocalisation,
-  createPandemie,
 } from "@/services/api";
 import { useState } from "react";
 
@@ -53,7 +50,6 @@ export default function AdminPage() {
     e.preventDefault();
     try {
       const response = await createData(data);
-      console.log("Data créer:", response);
       alert("Data créer avec succées!");
     } catch (error) {
       console.error("Erreur lors de la creation de data:", error);
@@ -67,7 +63,6 @@ export default function AdminPage() {
     e.preventDefault();
     try {
       const response = await createCalendrier(calendrier);
-      console.log("Calendrier created:", response);
       alert("Calendrier créé avec succès!");
     } catch (error) {
       console.error("Erreur lors de la creation de calendrier:", error);
@@ -81,7 +76,6 @@ export default function AdminPage() {
     e.preventDefault();
     try {
       const response = await createLocalisation(localisation);
-      console.log("Localisation created:", response);
       alert("Localisation créé avec succès!");
     } catch (error) {
       console.error("Erreur lors de la creation de localisation:", error);
@@ -93,7 +87,6 @@ export default function AdminPage() {
     e.preventDefault();
     try {
       const response = await createPandemie(pandemie);
-      console.log("Pandemie created:", response);
       alert("Pandemie créé avec succès!");
     } catch (error) {
       console.error("Erreur lors de la creation de pandemie:", error);

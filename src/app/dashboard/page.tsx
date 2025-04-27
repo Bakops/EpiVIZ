@@ -1,7 +1,7 @@
 "use client";
 
 import HeaderComponent from "@/components/layout/HeaderComponent";
-import InteractiveMap from "@/components/pandemic-map";
+import PandemicMap from "@/components/pandemic-map";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -121,7 +121,6 @@ export default function DashboardPage() {
     async function fetchLocalisations() {
       try {
         const data = await getAllLocations();
-        console.log("Localisations récupérées:", data);
         setLocalisations(data || []);
       } catch (error) {
         console.error(
@@ -138,10 +137,8 @@ export default function DashboardPage() {
     async function fetchPandemics() {
       try {
         const data = await getPandemics();
-        console.log("Pandémies récupérées:", data);
         setPandemics(data || []);
         if (data && data.length > 0) {
-          console.log("Sélection de la pandémie par défaut:", data[0].id);
           setSelectedPandemic(data[0].id);
         }
       } catch (error) {
@@ -154,12 +151,9 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (selectedPandemic) {
-      console.log("Pandemic sélectionnée:", selectedPandemic);
       if (selectedLocalisation) {
-        console.log("Localisation sélectionnée:", selectedLocalisation);
         fetchLocationData(selectedLocalisation, selectedPandemic);
       } else {
-        console.log("Récupération des données globales");
         fetchGlobalData(selectedPandemic);
       }
     }
@@ -167,10 +161,6 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (timeline) {
-      console.log(
-        "Timeline mise à jour, application du filtre:",
-        selectedTimeframe
-      );
       const filtered = filterTimelineByTimeframe(timeline, selectedTimeframe);
       updateChartData(filtered);
     }
@@ -180,11 +170,6 @@ export default function DashboardPage() {
     if (!data || data.length === 0) return [];
 
     const len = data.length;
-
-    console.log(
-      `Filtrage de la timeline (${len} entrées) par période:`,
-      timeframe
-    );
 
     switch (timeframe) {
       case "early":
@@ -207,8 +192,6 @@ export default function DashboardPage() {
   };
 
   const updateChartData = (timelineData: any[]) => {
-    console.log("Mise à jour des données du graphique:", timelineData);
-
     if (!timelineData || timelineData.length === 0) {
       console.warn("Aucune donnée de timeline disponible");
       setChartData((prev) => ({
@@ -240,14 +223,6 @@ export default function DashboardPage() {
       normalizeData(item, "newDeaths")
     );
 
-    console.log("Données préparées:", {
-      labels,
-      confirmedCases,
-      deaths,
-      newCases,
-      newDeaths,
-    });
-
     // Utiliser la dernière valeur non nulle pour chaque statistique
     const getLastNonZeroValue = (values: number[]) => {
       for (let i = values.length - 1; i >= 0; i--) {
@@ -265,7 +240,6 @@ export default function DashboardPage() {
       new_deaths: getLastNonZeroValue(newDeaths),
     };
 
-    console.log("Mise à jour des statistiques:", statsUpdate);
     setStats(statsUpdate);
 
     setChartData({
@@ -283,18 +257,13 @@ export default function DashboardPage() {
     setIsLoading(true);
     setError(null);
     try {
-      console.log("Récupération des données globales pour:", pandemicId);
       const globalData = await getGlobalData(pandemicId);
-      console.log("Données globales reçues:", globalData);
 
       if (!globalData) {
         throw new Error("Aucune donnée reçue");
       }
 
       if (globalData.timeline && Array.isArray(globalData.timeline)) {
-        console.log(
-          `Timeline globale reçue: ${globalData.timeline.length} entrées`
-        );
         setTimeline(globalData.timeline);
         const filtered = filterTimelineByTimeframe(
           globalData.timeline,
@@ -303,7 +272,6 @@ export default function DashboardPage() {
         updateChartData(filtered);
       } else if (Array.isArray(globalData)) {
         // Si les données sont directement un tableau
-        console.log(`Timeline globale directe: ${globalData.length} entrées`);
         setTimeline(globalData);
         const filtered = filterTimelineByTimeframe(
           globalData,
@@ -329,20 +297,13 @@ export default function DashboardPage() {
     setIsLoading(true);
     setError(null);
     try {
-      console.log(
-        `Récupération des données pour localisation ${locationId} et pandémie ${pandemicId}`
-      );
-      const data = await getLocationData(locationId, pandemicId);
-      console.log("Données de localisation reçues:", data);
 
+      const data = await getLocationData(locationId, pandemicId);
       if (!data) {
         throw new Error("Aucune donnée reçue");
       }
 
       if (data.timeline && Array.isArray(data.timeline)) {
-        console.log(
-          `Timeline de localisation reçue: ${data.timeline.length} entrées`
-        );
         setTimeline(data.timeline);
         const filtered = filterTimelineByTimeframe(
           data.timeline,
@@ -351,7 +312,6 @@ export default function DashboardPage() {
         updateChartData(filtered);
       } else if (Array.isArray(data)) {
         // Si les données sont directement un tableau
-        console.log(`Timeline de localisation directe: ${data.length} entrées`);
         setTimeline(data);
         const filtered = filterTimelineByTimeframe(data, selectedTimeframe);
         updateChartData(filtered);
@@ -371,7 +331,6 @@ export default function DashboardPage() {
   };
 
   const handleLocalisationChange = (localisationId: string) => {
-    console.log("Changement de localisation:", localisationId);
     if (localisationId === "global") {
       setSelectedLocalisation(null);
     } else {
@@ -379,8 +338,7 @@ export default function DashboardPage() {
     }
   };
 
-  const handleLocationClick = (_: any, locationId: string) => {
-    console.log("Clic sur la localisation:", locationId);
+  const handleLocationClick = (locationId: string) => {
     setSelectedLocalisation(locationId);
     if (selectedPandemic) {
       fetchLocationData(locationId, selectedPandemic);
@@ -608,11 +566,11 @@ export default function DashboardPage() {
             </div>
           </TabsContent>
           <TabsContent value="map" className="border rounded-md p-4">
-            <InteractiveMap
+            <PandemicMap
               localisations={localisations}
               selectedLocationId={selectedLocalisation}
+              selectedPandemicId={selectedPandemic}
               onLocationClick={handleLocationClick}
-              pandemicId={selectedPandemic}
               className="z-2"
             />
           </TabsContent>

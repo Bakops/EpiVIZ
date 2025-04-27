@@ -77,16 +77,14 @@ export const getAllData = async () => {
   }
 };
 
-export const getGlobalData = async (pandemicId) => {
+export const getGlobalData = async (pandemicId: string) => {
   try {
     const response = await api.get("/data");
     const allData = Array.isArray(response.data) ? response.data : [];
-    console.log("Données brutes reçues :", allData);
 
     const pandemicData = allData.filter(
       (item) => item && item.idPandemic === Number(pandemicId)
     );
-    console.log("Données filtrées par pandémie :", pandemicData);
 
     const totalCases = pandemicData.reduce(
       (sum, item) => sum + (item.totalCases || 0),
@@ -129,7 +127,6 @@ export const getGlobalData = async (pandemicId) => {
     });
 
     const timeline = Array.from(timelineMap.values());
-    console.log("Données de la timeline :", timeline);
 
     return {
       cas_confirmes: totalCases,
@@ -153,38 +150,35 @@ export const getGlobalData = async (pandemicId) => {
   }
 };
 
-export const getLocationData = async (locationId, pandemicId) => {
+export const getLocationData = async (locationId?: string, pandemicId?: string) => {
   try {
-    console.log(
-      `Appel API pour localisation ${locationId} et pandémie ${pandemicId}`
-    );
     const response = await api.get(`/data`);
-    const allData = Array.isArray(response.data) ? response.data : [];
-    console.log(allData)
-    const filteredData = allData.filter(
-      (item) =>
-        item &&
-        item.idPandemic === Number(pandemicId) &&
-        item.idLocation === Number(locationId)
-    );
+    
+    let filteredData = Array.isArray(response.data) ? response.data : [];
 
-    console.log("Données filtrées par localisation:", filteredData);
+    if (locationId) {
+      filteredData = filteredData.filter((item) => item.idLocation === Number(locationId));
+    }
+
+    if (pandemicId) {
+      filteredData = filteredData.filter((item) => item.idPandemic === Number(pandemicId));
+    }
 
     return {
       cas_confirmes: filteredData.reduce(
-        (sum, item) => sum + (item.totalCases || 0),
+        (sum, item) => sum + (item?.totalCases ?? 0),
         0
       ),
       deces: filteredData.reduce(
-        (sum, item) => sum + (item.totalDeaths || 0),
+        (sum, item) => sum + (item?.totalDeaths ?? 0),
         0
       ),
       new_cases: filteredData.reduce(
-        (sum, item) => sum + (item.newCases || 0),
+        (sum, item) => sum + (item?.newCases ?? 0),
         0
       ),
       new_deaths: filteredData.reduce(
-        (sum, item) => sum + (item.newDeaths || 0),
+        (sum, item) => sum + (item?.newDeaths ?? 0),
         0
       ),
       timeline: filteredData,
@@ -214,7 +208,7 @@ export const createData = async (data) => {
   }
 };
 
-export const exportPandemicData = async (pandemicId) => {
+export const exportPandemicData = async (pandemicId: number) => {
   try {
     const response = await api.get(`/pandemie/${pandemicId}/export`, {
       responseType: "blob",

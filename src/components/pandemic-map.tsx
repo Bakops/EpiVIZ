@@ -36,15 +36,26 @@ if (typeof window !== "undefined" && L) {
   });
 }
 
-export default function PandemicMap({ onLocationClick, selectedLocationId }) {
+export default function PandemicMap({ 
+  localisations, 
+  selectedLocationId, 
+  selectedPandemicId, 
+  onLocationClick 
+}) {
   const [loading, setLoading] = useState(true);
   const [locations, setLocations] = useState<any[]>([]);
+  const [locationData, setLocationData] = useState<any>(null);
 
   useEffect(() => {
     async function fetchLocations() {
       try {
         const data = await getAllLocations();
         setLocations(data);
+
+        const locationData = await getLocationData(selectedLocationId, selectedPandemicId);
+        setLocationData(locationData);
+
+        console.log("Location data:", locationData);
       } catch (error) {
         console.error(
           "Erreur lors de la récupération des localisations :",
@@ -55,15 +66,11 @@ export default function PandemicMap({ onLocationClick, selectedLocationId }) {
       }
     }
     fetchLocations();
-  }, []);
+  }, [selectedLocationId, selectedPandemicId]);
 
   const handleMarkerClick = async (location) => {
     try {
-      const data = await getLocationData(location.id);
-      onLocationClick(data, location.id);
-      console.log("Coucou");
-      console.log(location);
-      console.log(data);
+      onLocationClick(location.id);
     } catch (error) {
       console.error(
         "Erreur lors de la récupération des données de localisation:",
@@ -71,8 +78,6 @@ export default function PandemicMap({ onLocationClick, selectedLocationId }) {
       );
     }
   };
-
-  console.log({locations});
 
   return (
     <div className="space-y-4">
@@ -106,9 +111,9 @@ export default function PandemicMap({ onLocationClick, selectedLocationId }) {
                 <br />
                 {location.continent}
                 <br />
-                Cas confirmés: {location.cas_confirmes}
+                Cas confirmés: {locationData.new_cases}
                 <br />
-                Décès: {location.deces}
+                Décès: {locationData.new_deaths}
               </Popup>
             </Marker>
           ))}
