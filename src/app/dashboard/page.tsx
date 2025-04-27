@@ -201,7 +201,6 @@ export default function DashboardPage() {
 
   const normalizeData = (item: any, property: string): number => {
     const value = item[property];
-    console.log('Valeur de item property ${property} :', value)
     if (value === null || value === undefined) return 0;
     const numberValue = Number(value);
     return isNaN(numberValue) ? 0 : numberValue;
@@ -221,7 +220,6 @@ export default function DashboardPage() {
     }
 
     const labels = timelineData.map((item) => {
-      console.log("Clés de l'objet item:", Object.keys(item));
       try {
         return new Date(item.dateValue).toLocaleDateString();
       } catch (e) {

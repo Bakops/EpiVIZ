@@ -61,6 +61,9 @@ export default function PandemicMap({ onLocationClick, selectedLocationId }) {
     try {
       const data = await getLocationData(location.id);
       onLocationClick(data, location.id);
+      console.log("Coucou");
+      console.log(location);
+      console.log(data);
     } catch (error) {
       console.error(
         "Erreur lors de la récupération des données de localisation:",
@@ -68,6 +71,8 @@ export default function PandemicMap({ onLocationClick, selectedLocationId }) {
       );
     }
   };
+
+  console.log({locations});
 
   return (
     <div className="space-y-4">
