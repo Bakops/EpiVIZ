@@ -201,6 +201,7 @@ export default function DashboardPage() {
 
   const normalizeData = (item: any, property: string): number => {
     const value = item[property];
+    console.log('Valeur de item property ${property} :', value)
     if (value === null || value === undefined) return 0;
     const numberValue = Number(value);
     return isNaN(numberValue) ? 0 : numberValue;
@@ -220,8 +221,9 @@ export default function DashboardPage() {
     }
 
     const labels = timelineData.map((item) => {
+      console.log("Clés de l'objet item:", Object.keys(item));
       try {
-        return new Date(item.date).toLocaleDateString();
+        return new Date(item.date_value).toLocaleDateString();
       } catch (e) {
         console.error("Date invalide:", item.date);
         return "Date invalide";
@@ -231,10 +233,15 @@ export default function DashboardPage() {
     const confirmedCases = timelineData.map((item) =>
       normalizeData(item, "totalCases")
     );
+<<<<<<< HEAD
     const deaths = timelineData.map((item) =>
       normalizeData(item, "totalDeaths")
     );
 
+=======
+    const deaths = timelineData.map((item) => normalizeData(item, "deces"));
+    
+>>>>>>> 565468d40fc0483c8d32c115686bedff4525b6e2
     const newCases = timelineData.map((item) =>
       normalizeData(item, "newCases")
     );
@@ -631,10 +638,10 @@ export default function DashboardPage() {
                     return isNaN(Number(value)) ? 0 : Number(value);
                   };
 
-                  const cas_confirmes = safeValue(item.cas_confirmes);
-                  const deces = safeValue(item.deces);
-                  const new_cases = safeValue(item.new_cases);
-                  const new_deaths = safeValue(item.new_deaths);
+                  const cas_confirmes = safeValue(item.totalCases);
+                  const deces = safeValue(item.totalDeaths);
+                  const new_cases = safeValue(item.newCases);
+                  const new_deaths = safeValue(item.newDeaths);
 
                   // Formater la date
                   let formattedDate;

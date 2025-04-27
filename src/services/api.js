@@ -84,16 +84,16 @@ export const getGlobalData = async (pandemicId) => {
     console.log("Données brutes reçues :", allData);
 
     const pandemicData = allData.filter(
-      (item) => item && item.idPandemic === Number(pandemicId)
+      (item) => item && item.id_pandemie === Number(pandemicId)
     );
     console.log("Données filtrées par pandémie :", pandemicData);
 
     const totalCases = pandemicData.reduce(
-      (sum, item) => sum + (item.totalCases || 0),
+      (sum, item) => sum + (item.total_cases || 0),
       0
     );
     const totalDeaths = pandemicData.reduce(
-      (sum, item) => sum + (item.totalDeaths || 0),
+      (sum, item) => sum + (item.total_deaths || 0),
       0
     );
     const newCases = pandemicData.reduce(
@@ -119,8 +119,8 @@ export const getGlobalData = async (pandemicId) => {
         });
       }
       const dayData = timelineMap.get(calendarId);
-      dayData.cas_confirmes += item.totalCases || 0;
-      dayData.deces += item.totalDeaths || 0;
+      dayData.cas_confirmes += item.total_cases || 0;
+      dayData.deces += item.total_deaths || 0;
       dayData.new_cases += item.new_cases || 0;
       dayData.new_deaths += item.new_deaths || 0;
     });
@@ -157,31 +157,31 @@ export const getLocationData = async (locationId, pandemicId) => {
     );
     const response = await api.get(`/data`);
     const allData = Array.isArray(response.data) ? response.data : [];
-    console.log(allData);
+
     const filteredData = allData.filter(
       (item) =>
         item &&
-        item.idPandemic === Number(pandemicId) &&
-        item.idLocation === Number(locationId)
+        item.id_pandemie === Number(pandemicId) &&
+        item.id_location === Number(locationId)
     );
 
     console.log("Données filtrées par localisation:", filteredData);
 
     return {
       cas_confirmes: filteredData.reduce(
-        (sum, item) => sum + (item.totalCases || 0),
+        (sum, item) => sum + (item.total_cases || 0),
         0
       ),
       deces: filteredData.reduce(
-        (sum, item) => sum + (item.totalDeaths || 0),
+        (sum, item) => sum + (item.total_deaths || 0),
         0
       ),
       new_cases: filteredData.reduce(
-        (sum, item) => sum + (item.newCases || 0),
+        (sum, item) => sum + (item.new_cases || 0),
         0
       ),
       new_deaths: filteredData.reduce(
-        (sum, item) => sum + (item.newDeaths || 0),
+        (sum, item) => sum + (item.new_deaths || 0),
         0
       ),
       timeline: filteredData,
