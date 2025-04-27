@@ -11,7 +11,7 @@ interface PandemicChartProps {
 }
 
 const api = axios.create({
-  baseURL: "http://localhost:8080/api", // Replace with your actual API base URL
+  baseURL: "http://localhost:8081/api", // Replace with your actual API base URL
 });
 
 export const getPandemicChartData = async (
