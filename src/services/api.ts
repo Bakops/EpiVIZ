@@ -1,4 +1,7 @@
 import axios from "axios";
+import { Calendrier } from "../types/calendrier";
+import { Localisation } from "../types/localisation";
+import { Pandemie } from "../types/pandemie";
 
 const api = axios.create({
   baseURL: "http://localhost:8081/api",
@@ -150,18 +153,25 @@ export const getGlobalData = async (pandemicId: string) => {
   }
 };
 
-export const getLocationData = async (locationId?: string, pandemicId?: string) => {
+export const getLocationData = async (
+  locationId?: string,
+  pandemicId?: string
+) => {
   try {
     const response = await api.get(`/data`);
-    
+
     let filteredData = Array.isArray(response.data) ? response.data : [];
 
     if (locationId) {
-      filteredData = filteredData.filter((item) => item.idLocation === Number(locationId));
+      filteredData = filteredData.filter(
+        (item) => item.idLocation === Number(locationId)
+      );
     }
 
     if (pandemicId) {
-      filteredData = filteredData.filter((item) => item.idPandemic === Number(pandemicId));
+      filteredData = filteredData.filter(
+        (item) => item.idPandemic === Number(pandemicId)
+      );
     }
 
     return {
@@ -198,7 +208,7 @@ export const getLocationData = async (locationId?: string, pandemicId?: string) 
   }
 };
 
-export const createData = async (data) => {
+export const createData = async (data: Record<string, any>) => {
   try {
     const response = await api.post("/data", data);
     return response.data;
@@ -216,6 +226,87 @@ export const exportPandemicData = async (pandemicId: number) => {
     return response.data;
   } catch (error) {
     console.error("Erreur lors de l'exportation des données :", error);
+    throw error;
+  }
+};
+
+export const createLocalisation = async (localisation: Localisation) => {
+  const response = await fetch("http://localhost:8081/api/location", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(localisation),
+  });
+  return response.json();
+};
+
+export const createPandemie = async (pandemie: Pandemie) => {
+  const response = await fetch("http://localhost:8081/api/pandemie", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(pandemie),
+  });
+  return response.json();
+};
+
+export const createCalendrier = async (calendrier: Calendrier) => {
+  const response = await fetch("http://localhost:8081/api/calendrier", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(calendrier),
+  });
+  return response.json();
+};
+
+// Fonctions pour Data
+export const deleteData = async (id: number) => {
+  try {
+    await api.delete(`/api/data/${id}`);
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const updateData = async (id: number, data: any) => {
+  try {
+    const response = await api.put(`/api/data/${id}`, data);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Fonctions pour Localisation
+export const deleteLocalisation = async (id: number) => {
+  try {
+    await api.delete(`/api/location/${id}`);
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const updateLocalisation = async (id: number, data: any) => {
+  try {
+    const response = await api.put(`/api/location/${id}`, data);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Fonctions pour Pandemie
+export const deletePandemie = async (id: number) => {
+  try {
+    await api.delete(`/api/pandemie/${id}`);
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const updatePandemie = async (id: number, data: any) => {
+  try {
+    const response = await api.put(`/api/pandemie/${id}`, data);
+    return response.data;
+  } catch (error) {
     throw error;
   }
 };

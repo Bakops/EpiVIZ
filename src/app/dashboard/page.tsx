@@ -54,6 +54,52 @@ type ChartData = {
   datasets: ChartDataset[];
 };
 
+type ConsentBannerProps = {
+  onAccept: () => void;
+  onReject: () => void;
+};
+
+const ConsentBanner = ({ onAccept, onReject }: ConsentBannerProps) => (
+  <div
+    role="alert"
+    className="fixed bottom-0 left-0 right-0 bg-white p-4 shadow-lg border-t z-50"
+    aria-labelledby="consent-title"
+  >
+    <div className="container mx-auto">
+      <h2 id="consent-title" className="text-lg font-bold mb-2">
+        Protection de vos données
+      </h2>
+      <p className="mb-4">
+        Conformément au RGPD, nous collectons uniquement des données
+        statistiques anonymisées. Aucune donnée personnelle n'est stockée ou
+        traitée.
+        <a
+          href="/privacy"
+          className="text-blue-600 underline ml-2"
+          aria-label="En savoir plus sur notre politique de confidentialité"
+        >
+          En savoir plus
+        </a>
+      </p>
+      <div className="flex gap-4">
+        <Button
+          onClick={onAccept}
+          aria-label="Accepter la collecte de données anonymisées"
+        >
+          Accepter
+        </Button>
+        <Button
+          variant="outline"
+          onClick={onReject}
+          aria-label="Refuser la collecte de données"
+        >
+          Refuser
+        </Button>
+      </div>
+    </div>
+  </div>
+);
+
 export default function DashboardPage() {
   const [selectedPandemic, setSelectedPandemic] = useState<string | null>(null);
   const [selectedTimeframe, setSelectedTimeframe] = useState("all");
@@ -116,6 +162,10 @@ export default function DashboardPage() {
       },
     },
   };
+
+  const [consentGiven, setConsentGiven] = useState<boolean>(false);
+  const [highContrast, setHighContrast] = useState<boolean>(false);
+  const [fontSize, setFontSize] = useState<string>("medium");
 
   useEffect(() => {
     async function fetchLocalisations() {
@@ -214,7 +264,9 @@ export default function DashboardPage() {
     const confirmedCases = timelineData.map((item) =>
       normalizeData(item, "totalCases")
     );
-    const deaths = timelineData.map((item) => normalizeData(item, "totalDeaths"));
+    const deaths = timelineData.map((item) =>
+      normalizeData(item, "totalDeaths")
+    );
 
     const newCases = timelineData.map((item) =>
       normalizeData(item, "newCases")
@@ -297,7 +349,6 @@ export default function DashboardPage() {
     setIsLoading(true);
     setError(null);
     try {
-
       const data = await getLocationData(locationId, pandemicId);
       if (!data) {
         throw new Error("Aucune donnée reçue");
@@ -343,6 +394,56 @@ export default function DashboardPage() {
     if (selectedPandemic) {
       fetchLocationData(locationId, selectedPandemic);
     }
+  };
+
+  const handleExportData = () => {
+    if (!selectedPandemic || !timeline) return;
+
+    const exportData = {
+      pandemic_id: selectedPandemic,
+      location: selectedLocalisation ? selectedLocalisation : "global",
+      timeframe: selectedTimeframe,
+      statistics: {
+        total_cases: stats.cas_confirmes,
+        total_deaths: stats.deces,
+        new_cases: stats.new_cases,
+        new_deaths: stats.new_deaths,
+      },
+      timeline: timeline.map((item: any) => ({
+        date: item.date || item.dateValue,
+        total_cases: item.totalCases || 0,
+        total_deaths: item.totalDeaths || 0,
+        new_cases: item.newCases || 0,
+        new_deaths: item.newDeaths || 0,
+      })),
+    };
+
+    // Création et téléchargement du fichier
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], {
+      type: "application/json",
+    });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `pandemic-data-${selectedPandemic}-${selectedTimeframe}-${
+      new Date().toISOString().split("T")[0]
+    }.json`;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+  };
+
+  useEffect(() => {
+    const savedConsent = localStorage.getItem("rgpdConsent");
+    if (savedConsent) {
+      setConsentGiven(JSON.parse(savedConsent));
+    }
+  }, []);
+
+  const handleConsent = (accepted: boolean) => {
+    setConsentGiven(accepted);
+    localStorage.setItem("rgpdConsent", JSON.stringify(accepted));
   };
 
   return (
@@ -410,7 +511,26 @@ export default function DashboardPage() {
           </Select>
 
           <div className="ml-auto">
-            <Button variant="outline" disabled={!selectedPandemic}>
+            <Button
+              variant="outline"
+              disabled={!selectedPandemic || !timeline}
+              onClick={handleExportData}
+              className="flex items-center gap-2 cursor-pointer"
+            >
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+              </svg>
               Exporter les données
             </Button>
           </div>
@@ -418,7 +538,9 @@ export default function DashboardPage() {
         <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
           <Card>
             <CardHeader>
-              <CardTitle>Nombre de cas confirmés</CardTitle>
+              <CardTitle className="text-[#4BC0C0]">
+                Nombre de cas confirmés
+              </CardTitle>
             </CardHeader>
             <CardContent>
               {isLoading ? (
@@ -452,7 +574,7 @@ export default function DashboardPage() {
           </Card>
           <Card>
             <CardHeader>
-              <CardTitle>Nombre de décès</CardTitle>
+              <CardTitle className="text-[#FF7391]">Nombre de décès</CardTitle>
             </CardHeader>
             <CardContent>
               {isLoading ? (
@@ -486,7 +608,7 @@ export default function DashboardPage() {
           </Card>
           <Card>
             <CardHeader>
-              <CardTitle>Nouveaux cas</CardTitle>
+              <CardTitle className="text-[#4AABED]">Nouveaux cas</CardTitle>
             </CardHeader>
             <CardContent>
               {isLoading ? (
@@ -520,7 +642,7 @@ export default function DashboardPage() {
           </Card>
           <Card>
             <CardHeader>
-              <CardTitle>Nouveaux décès</CardTitle>
+              <CardTitle className="text-[#FF9F40]">Nouveaux décès</CardTitle>
             </CardHeader>
             <CardContent>
               {isLoading ? (
@@ -557,8 +679,6 @@ export default function DashboardPage() {
           <TabsList>
             <TabsTrigger value="charts">Graphiques</TabsTrigger>
             <TabsTrigger value="map">Carte</TabsTrigger>
-            <TabsTrigger value="stats">Statistiques</TabsTrigger>
-            <TabsTrigger value="timeline">Chronologie</TabsTrigger>
           </TabsList>
           <TabsContent value="charts" className="border rounded-md p-4">
             <div className="w-full h-full">
@@ -650,6 +770,13 @@ export default function DashboardPage() {
             )}
           </TabsContent>
         </Tabs>
+        {/* Bannière RGPD */}
+        {!consentGiven && (
+          <ConsentBanner
+            onAccept={() => handleConsent(true)}
+            onReject={() => handleConsent(false)}
+          />
+        )}
       </main>
     </div>
   );

@@ -36,12 +36,19 @@ if (typeof window !== "undefined" && L) {
   });
 }
 
-export default function PandemicMap({ 
-  localisations, 
-  selectedLocationId, 
-  selectedPandemicId, 
-  onLocationClick 
-}) {
+interface PandemicMapProps {
+  localisations: any[];
+  selectedLocationId: string | number;
+  selectedPandemicId: string | number;
+  onLocationClick: (id: string | number) => void;
+}
+
+export default function PandemicMap({
+  localisations,
+  selectedLocationId,
+  selectedPandemicId,
+  onLocationClick,
+}: PandemicMapProps) {
   const [loading, setLoading] = useState(true);
   const [locations, setLocations] = useState<any[]>([]);
   const [locationData, setLocationData] = useState<any>(null);
@@ -52,7 +59,10 @@ export default function PandemicMap({
         const data = await getAllLocations();
         setLocations(data);
 
-        const locationData = await getLocationData(selectedLocationId, selectedPandemicId);
+        const locationData = await getLocationData(
+          String(selectedLocationId),
+          String(selectedPandemicId)
+        );
         setLocationData(locationData);
 
         console.log("Location data:", locationData);
@@ -68,7 +78,7 @@ export default function PandemicMap({
     fetchLocations();
   }, [selectedLocationId, selectedPandemicId]);
 
-  const handleMarkerClick = async (location) => {
+  const handleMarkerClick = async (location: { id: string | number }) => {
     try {
       onLocationClick(location.id);
     } catch (error) {

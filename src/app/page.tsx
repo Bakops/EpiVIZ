@@ -24,14 +24,18 @@ export default function Home() {
                     Explorer les données
                   </Button>
                 </Link>
-                <Link href="/api-docs">
+                <a
+                  href="http://localhost:8081/swagger-ui/index.html"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
                   <Button
                     variant="outline"
                     className="cursor-pointer hover:text-transparent hover:bg-clip-text hover:bg-gradient-to-r from-[#98ff87] to-[#3d96ff] font-bold"
                   >
                     Documentation API
                   </Button>
-                </Link>
+                </a>
               </div>
             </div>
           </div>

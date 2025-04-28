@@ -32,9 +32,9 @@ export default function HeaderComponent() {
         </Link>
         <Link
           className="relative text-sm font-poppins font-bold text-[#6b6b6b] transition-colors duration-300 ease-in-out hover:text-transparent hover:bg-clip-text hover:bg-gradient-to-r from-red-500 to-purple-900"
-          href="/api-docs"
+          href="/admin"
         >
-          API
+          Admin
         </Link>
         <Link
           className="relative text-sm font-poppins font-bold text-[#6b6b6b] transition-colors duration-300 ease-in-out hover:text-transparent hover:bg-clip-text hover:bg-gradient-to-r from-red-500 to-purple-900"
