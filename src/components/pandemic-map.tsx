@@ -38,9 +38,9 @@ if (typeof window !== "undefined" && L) {
 
 interface PandemicMapProps {
   localisations: any[];
-  selectedLocationId: string | number;
-  selectedPandemicId: string | number;
-  onLocationClick: (id: string | number) => void;
+  selectedLocationId: string | number | null;
+  selectedPandemicId: string | number | null;
+  onLocationClick: (id: string | number | null) => void;
 }
 
 export default function PandemicMap({
