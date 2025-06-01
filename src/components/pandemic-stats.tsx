@@ -50,34 +50,34 @@ export function PandemicStats({ pandemic, timeframe }: PandemicStatsProps) {
         pandemic === "covid19"
           ? "768M"
           : pandemic === "spanish_flu"
-          ? "500M"
-          : pandemic === "black_death"
-          ? "75M"
-          : "8K",
+            ? "500M"
+            : pandemic === "black_death"
+              ? "75M"
+              : "8K",
       deaths:
         pandemic === "covid19"
           ? "6.9M"
           : pandemic === "spanish_flu"
-          ? "50M"
-          : pandemic === "black_death"
-          ? "25M"
-          : "774",
+            ? "50M"
+            : pandemic === "black_death"
+              ? "25M"
+              : "774",
       mortality:
         pandemic === "covid19"
           ? "0.9%"
           : pandemic === "spanish_flu"
-          ? "10%"
-          : pandemic === "black_death"
-          ? "33%"
-          : "9.6%",
+            ? "10%"
+            : pandemic === "black_death"
+              ? "33%"
+              : "9.6%",
       duration:
         pandemic === "covid19"
           ? "3+ ans"
           : pandemic === "spanish_flu"
-          ? "2 ans"
-          : pandemic === "black_death"
-          ? "7 ans"
-          : "8 mois",
+            ? "2 ans"
+            : pandemic === "black_death"
+              ? "7 ans"
+              : "8 mois",
     },
     {
       region: "Europe",
@@ -85,34 +85,34 @@ export function PandemicStats({ pandemic, timeframe }: PandemicStatsProps) {
         pandemic === "covid19"
           ? "240M"
           : pandemic === "spanish_flu"
-          ? "125M"
-          : pandemic === "black_death"
-          ? "50M"
-          : "2K",
+            ? "125M"
+            : pandemic === "black_death"
+              ? "50M"
+              : "2K",
       deaths:
         pandemic === "covid19"
           ? "2.1M"
           : pandemic === "spanish_flu"
-          ? "12.5M"
-          : pandemic === "black_death"
-          ? "20M"
-          : "200",
+            ? "12.5M"
+            : pandemic === "black_death"
+              ? "20M"
+              : "200",
       mortality:
         pandemic === "covid19"
           ? "0.9%"
           : pandemic === "spanish_flu"
-          ? "10%"
-          : pandemic === "black_death"
-          ? "40%"
-          : "10%",
+            ? "10%"
+            : pandemic === "black_death"
+              ? "40%"
+              : "10%",
       duration:
         pandemic === "covid19"
           ? "3+ ans"
           : pandemic === "spanish_flu"
-          ? "2 ans"
-          : pandemic === "black_death"
-          ? "4 ans"
-          : "6 mois",
+            ? "2 ans"
+            : pandemic === "black_death"
+              ? "4 ans"
+              : "6 mois",
     },
     {
       region: "Asie",
@@ -120,34 +120,34 @@ export function PandemicStats({ pandemic, timeframe }: PandemicStatsProps) {
         pandemic === "covid19"
           ? "300M"
           : pandemic === "spanish_flu"
-          ? "200M"
-          : pandemic === "black_death"
-          ? "15M"
-          : "5K",
+            ? "200M"
+            : pandemic === "black_death"
+              ? "15M"
+              : "5K",
       deaths:
         pandemic === "covid19"
           ? "2.7M"
           : pandemic === "spanish_flu"
-          ? "20M"
-          : pandemic === "black_death"
-          ? "5M"
-          : "500",
+            ? "20M"
+            : pandemic === "black_death"
+              ? "5M"
+              : "500",
       mortality:
         pandemic === "covid19"
           ? "0.9%"
           : pandemic === "spanish_flu"
-          ? "10%"
-          : pandemic === "black_death"
-          ? "33%"
-          : "10%",
+            ? "10%"
+            : pandemic === "black_death"
+              ? "33%"
+              : "10%",
       duration:
         pandemic === "covid19"
           ? "3+ ans"
           : pandemic === "spanish_flu"
-          ? "2 ans"
-          : pandemic === "black_death"
-          ? "5 ans"
-          : "8 mois",
+            ? "2 ans"
+            : pandemic === "black_death"
+              ? "5 ans"
+              : "8 mois",
     },
     {
       region: "Amériques",
@@ -155,34 +155,34 @@ export function PandemicStats({ pandemic, timeframe }: PandemicStatsProps) {
         pandemic === "covid19"
           ? "190M"
           : pandemic === "spanish_flu"
-          ? "150M"
-          : pandemic === "black_death"
-          ? "0"
-          : "300",
+            ? "150M"
+            : pandemic === "black_death"
+              ? "0"
+              : "300",
       deaths:
         pandemic === "covid19"
           ? "1.7M"
           : pandemic === "spanish_flu"
-          ? "15M"
-          : pandemic === "black_death"
-          ? "0"
-          : "30",
+            ? "15M"
+            : pandemic === "black_death"
+              ? "0"
+              : "30",
       mortality:
         pandemic === "covid19"
           ? "0.9%"
           : pandemic === "spanish_flu"
-          ? "10%"
-          : pandemic === "black_death"
-          ? "0%"
-          : "10%",
+            ? "10%"
+            : pandemic === "black_death"
+              ? "0%"
+              : "10%",
       duration:
         pandemic === "covid19"
           ? "3+ ans"
           : pandemic === "spanish_flu"
-          ? "2 ans"
-          : pandemic === "black_death"
-          ? "0"
-          : "4 mois",
+            ? "2 ans"
+            : pandemic === "black_death"
+              ? "0"
+              : "4 mois",
     },
     {
       region: "Afrique",
@@ -190,34 +190,34 @@ export function PandemicStats({ pandemic, timeframe }: PandemicStatsProps) {
         pandemic === "covid19"
           ? "25M"
           : pandemic === "spanish_flu"
-          ? "15M"
-          : pandemic === "black_death"
-          ? "10M"
-          : "100",
+            ? "15M"
+            : pandemic === "black_death"
+              ? "10M"
+              : "100",
       deaths:
         pandemic === "covid19"
           ? "225K"
           : pandemic === "spanish_flu"
-          ? "1.5M"
-          : pandemic === "black_death"
-          ? "3M"
-          : "10",
+            ? "1.5M"
+            : pandemic === "black_death"
+              ? "3M"
+              : "10",
       mortality:
         pandemic === "covid19"
           ? "0.9%"
           : pandemic === "spanish_flu"
-          ? "10%"
-          : pandemic === "black_death"
-          ? "30%"
-          : "10%",
+            ? "10%"
+            : pandemic === "black_death"
+              ? "30%"
+              : "10%",
       duration:
         pandemic === "covid19"
           ? "3+ ans"
           : pandemic === "spanish_flu"
-          ? "2 ans"
-          : pandemic === "black_death"
-          ? "3 ans"
-          : "2 mois",
+            ? "2 ans"
+            : pandemic === "black_death"
+              ? "3 ans"
+              : "2 mois",
     },
     {
       region: "Océanie",
@@ -225,34 +225,34 @@ export function PandemicStats({ pandemic, timeframe }: PandemicStatsProps) {
         pandemic === "covid19"
           ? "13M"
           : pandemic === "spanish_flu"
-          ? "10M"
-          : pandemic === "black_death"
-          ? "0"
-          : "0",
+            ? "10M"
+            : pandemic === "black_death"
+              ? "0"
+              : "0",
       deaths:
         pandemic === "covid19"
           ? "117K"
           : pandemic === "spanish_flu"
-          ? "1M"
-          : pandemic === "black_death"
-          ? "0"
-          : "0",
+            ? "1M"
+            : pandemic === "black_death"
+              ? "0"
+              : "0",
       mortality:
         pandemic === "covid19"
           ? "0.9%"
           : pandemic === "spanish_flu"
-          ? "10%"
-          : pandemic === "black_death"
-          ? "0%"
-          : "0%",
+            ? "10%"
+            : pandemic === "black_death"
+              ? "0%"
+              : "0%",
       duration:
         pandemic === "covid19"
           ? "3+ ans"
           : pandemic === "spanish_flu"
-          ? "1.5 ans"
-          : pandemic === "black_death"
-          ? "0"
-          : "0",
+            ? "1.5 ans"
+            : pandemic === "black_death"
+              ? "0"
+              : "0",
     },
   ];
 

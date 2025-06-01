@@ -121,9 +121,9 @@ export default function PandemicMap({
                 <br />
                 {location.continent}
                 <br />
-                Cas confirmés: {locationData.new_cases}
+                Cas confirmés: {locationData.cas_confirmes}
                 <br />
-                Décès: {locationData.new_deaths}
+                Décès: {locationData.deces}
               </Popup>
             </Marker>
           ))}
