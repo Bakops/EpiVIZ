@@ -1,7 +1,7 @@
 import axios from "axios";
-import { Calendrier } from "../types/calendrier";
-import { Localisation } from "../types/localisation";
-import { Pandemie } from "../types/pandemie";
+import { Localisation } from "../models/Localisation";
+import { Pandemie } from "../models/Pandemie";
+import { Calendrier } from "../models/Calendrier";
 
 const api = axios.create({
   baseURL: "http://localhost:8081/api/v1",
@@ -191,6 +191,16 @@ export const getLocationData = async (
   locationId?: string,
   pandemicId?: string
 ) => {
+  if (!locationId || !pandemicId) {
+    return {
+      cas_confirmes: 0,
+      deces: 0,
+      new_cases: 0,
+      new_deaths: 0,
+      timeline: [],
+    };
+  }
+
   try {
     const [dataResponse, calendarResponse] = await Promise.all([
       api.get("/data", { params: { id_location: locationId, id_pandemie: pandemicId } }),
