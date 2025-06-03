@@ -7,20 +7,23 @@ export interface Prediction {
 }
 
 export async function getPredictions(countryId: number): Promise<Prediction[]> {
-  const apiUrl = `https://db58-34-57-148-132.ngrok-free.app/predict?country=${countryId}`;
+  const apiUrl = `https://0617-104-198-40-219.ngrok-free.app/predict?country=${countryId}`;
 
   try {
     const res = await fetch(apiUrl, {
       headers: {
-        "Content-Type": "application/json",
+        "ngrok-skip-browser-warning": "true",
       },
     });
 
-    const raw = await res.text();
-    const data = JSON.parse(raw);
+    if (!res.ok) {
+      throw new Error(`Erreur HTTP ${res.status}: ${res.statusText}`);
+    }
+
+    const data = await res.json();
 
     if (!data.predictions || !Array.isArray(data.predictions)) {
-      throw new Error("Format de réponse inattendu");
+      throw new Error("Format de réponse inattendu depuis l'API");
     }
 
     return data.predictions;

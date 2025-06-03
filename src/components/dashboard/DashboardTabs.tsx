@@ -30,7 +30,6 @@ export default function DashboardTabs({
         <TabsTrigger value="charts">Graphiques</TabsTrigger>
         <TabsTrigger value="map">Carte</TabsTrigger>
         <TabsTrigger value="predict">Prédictions</TabsTrigger>
-        <TabsTrigger value="timeline">Chronologie</TabsTrigger>
       </TabsList>
       <TabsContent value="charts" className="border rounded-md p-4">
         <div className="w-full h-full">

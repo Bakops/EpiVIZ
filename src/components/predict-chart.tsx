@@ -61,14 +61,22 @@ export default function PredictionChart({ country }: PredictionChartProps) {
       {
         label: "Nouveaux cas",
         data: data.map((p) => p.new_cases),
-        borderColor: "rgba(54, 162, 235, 1)",
-        fill: false,
+        borderColor: "blue",
       },
       {
         label: "Nouveaux décès",
         data: data.map((p) => p.new_deaths),
-        borderColor: "rgba(255, 99, 132, 1)",
-        fill: false,
+        borderColor: "red",
+      },
+      {
+        label: "Total cas",
+        data: data.map((p) => p.total_cases),
+        borderColor: "green",
+      },
+      {
+        label: "Total décès",
+        data: data.map((p) => p.total_deaths),
+        borderColor: "orange",
       },
     ],
   };
