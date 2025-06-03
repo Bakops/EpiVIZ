@@ -1,10 +1,10 @@
 import axios from "axios";
-import { Calendrier } from "../types/calendrier";
-import { Localisation } from "../types/localisation";
-import { Pandemie } from "../types/pandemie";
+import { Localisation } from "../models/Localisation";
+import { Pandemie } from "../models/Pandemie";
+import { Calendrier } from "../models/Calendrier";
 
 const api = axios.create({
-  baseURL: "http://localhost:8081/api",
+  baseURL: "http://localhost:8081/api/v1",
 });
 
 export const getPandemics = async () => {
@@ -13,6 +13,16 @@ export const getPandemics = async () => {
     return Array.isArray(response.data) ? response.data : [];
   } catch (error) {
     console.error("Erreur lors de la récupération des pandémies :", error);
+    return [];
+  }
+};
+
+export const getCalendars = async () => {
+  try {
+    const response = await api.get("/calendar");
+    return Array.isArray(response.data) ? response.data : [];
+  } catch (error) {
+    console.error("Erreur lors de la récupération des calendriers :", error);
     return [];
   }
 };
@@ -75,45 +85,75 @@ export const getAllData = async () => {
 
 export const getGlobalData = async (pandemicId: string) => {
   try {
-    const response = await api.get("/data");
-    const allData = Array.isArray(response.data) ? response.data : [];
+    const [dataResponse, calendarResponse] = await Promise.all([
+      api.get("/data"),
+      api.get("/calendar"),
+    ]);
 
-    const pandemicData = allData.filter(
+    const allData = Array.isArray(dataResponse.data) ? dataResponse.data : [];
+    const calendars = Array.isArray(calendarResponse.data) ? calendarResponse.data : [];
+
+    // Convertir les calendriers en Map pour accès rapide par id_calendar
+    const calendarMap = new Map(
+      calendars.map((cal) => [cal.id, cal.date_value ?? ""]));
+    console.log("Calendars Map :", calendarMap);
+
+    const mappedData = allData.map((item) => ({
+      ...item,
+      totalCases: item.totalCases ?? item.total_cases ?? 0,
+      totalDeaths: item.totalDeaths ?? item.total_deaths ?? 0,
+      newCases: item.newCases ?? item.new_cases ?? 0,
+      newDeaths: item.newDeaths ?? item.new_deaths ?? 0,
+      idPandemic: item.idPandemic ?? item.id_pandemie ?? 0,
+      idLocation: item.idLocation ?? item.id_location ?? 0,
+      idCalendar: item.idCalendar ?? item.id_calendar ?? 0,
+      dateValue: calendarMap.get(item.idCalendar ?? item.id_calendar) ?? "",
+    }));
+
+    const pandemicData = mappedData.filter(
       (item) => item && item.idPandemic === Number(pandemicId)
     );
+
+
 
     const totalCases = pandemicData.reduce(
       (sum, item) => sum + (item.totalCases || 0),
       0
     );
+    console.log("TotalCases :", totalCases);
     const totalDeaths = pandemicData.reduce(
       (sum, item) => sum + (item.totalDeaths || 0),
       0
     );
+    console.log("TotalDeaths :", totalDeaths);
+
     const newCases = pandemicData.reduce(
       (sum, item) => sum + (item.newCases || 0),
       0
     );
+    console.log("NewCases :", newCases);
     const newDeaths = pandemicData.reduce(
       (sum, item) => sum + (item.newDeaths || 0),
       0
     );
+    console.log("NewDeaths :", newDeaths);
 
     const timelineMap = new Map();
     pandemicData.forEach((item) => {
       if (!item || !item.dateValue) return;
-      const dateValue = item.dateValue;
-      if (!timelineMap.has(dateValue)) {
-        timelineMap.set(dateValue, {
-          dateValue: dateValue,
+      const date = item.dateValue;
+      if (!timelineMap.has(date)) {
+        timelineMap.set(date, {
+          dateValue: date,
           totalCases: 0,
           totalDeaths: 0,
           newCases: 0,
           newDeaths: 0,
-          idCalendar: 0,
+          idCalendar: item.idCalendar,
         });
       }
-      const dayData = timelineMap.get(dateValue);
+
+      const dayData = timelineMap.get(date);
 
       dayData.totalCases += item.totalCases || 0;
       dayData.totalDeaths += item.totalDeaths || 0;
@@ -121,6 +161,7 @@ export const getGlobalData = async (pandemicId: string) => {
       dayData.newDeaths += item.newDeaths || 0;
       dayData.idCalendar = item.idCalendar || 0;
     });
+    console.log("TimelineMap :", timelineMap);
 
     const timeline = Array.from(timelineMap.values());
 
@@ -150,47 +191,96 @@ export const getLocationData = async (
   locationId?: string,
   pandemicId?: string
 ) => {
+  if (!locationId || !pandemicId) {
+    return {
+      cas_confirmes: 0,
+      deces: 0,
+      new_cases: 0,
+      new_deaths: 0,
+      timeline: [],
+    };
+  }
+
   try {
-    const response = await api.get(`/data`);
+    const [dataResponse, calendarResponse] = await Promise.all([
+      api.get("/data", { params: { id_location: locationId, id_pandemie: pandemicId } }),
+      api.get("/calendar"),
+    ]);
 
-    let filteredData = Array.isArray(response.data) ? response.data : [];
+    const allData = Array.isArray(dataResponse.data) ? dataResponse.data : [];
+    const calendars = Array.isArray(calendarResponse.data) ? calendarResponse.data : [];
 
-    if (locationId) {
-      filteredData = filteredData.filter(
-        (item) => item.idLocation === Number(locationId)
-      );
-    }
+    const calendarMap = new Map(
+      calendars.map((cal) => [cal.id, cal.date_value ?? ""])
+    );
 
-    if (pandemicId) {
-      filteredData = filteredData.filter(
-        (item) => item.idPandemic === Number(pandemicId)
-      );
-    }
+    const mappedData = allData.map((item) => ({
+      ...item,
+      totalCases: item.totalCases ?? item.total_cases ?? 0,
+      totalDeaths: item.totalDeaths ?? item.total_deaths ?? 0,
+      newCases: item.newCases ?? item.new_cases ?? 0,
+      newDeaths: item.newDeaths ?? item.new_deaths ?? 0,
+      idPandemic: item.idPandemic ?? item.id_pandemie ?? 0,
+      idLocation: item.idLocation ?? item.id_location ?? 0,
+      idCalendar: item.idCalendar ?? item.id_calendar ?? 0,
+      dateValue: calendarMap.get(item.idCalendar ?? item.id_calendar) ?? "",
+    }));
+
+    // On filtre si besoin (au cas où API ne filtre pas)
+    const filteredData = mappedData.filter(
+      (item) =>
+        (!locationId || item.idLocation === Number(locationId)) &&
+        (!pandemicId || item.idPandemic === Number(pandemicId))
+    );
+
+    // Construction timeline agrégée par date
+    const timelineMap = new Map<string, {
+      dateValue: string;
+      totalCases: number;
+      totalDeaths: number;
+      newCases: number;
+      newDeaths: number;
+      idCalendar: number;
+    }>();
+
+    filteredData.forEach((item) => {
+      if (!item.dateValue) return;
+
+      if (!timelineMap.has(item.dateValue)) {
+        timelineMap.set(item.dateValue, {
+          dateValue: item.dateValue,
+          totalCases: 0,
+          totalDeaths: 0,
+          newCases: 0,
+          newDeaths: 0,
+          idCalendar: item.idCalendar,
+        });
+      }
+
+      const dayData = timelineMap.get(item.dateValue)!;
+      dayData.totalCases += item.totalCases;
+      dayData.totalDeaths += item.totalDeaths;
+      dayData.newCases += item.newCases;
+      dayData.newDeaths += item.newDeaths;
+    });
+
+    const timeline = Array.from(timelineMap.values());
+
+    // Calculs globaux
+    const cas_confirmes = filteredData.reduce((max, item) => Math.max(max, item.totalCases), 0);
+    const deces = filteredData.reduce((max, item) => Math.max(max, item.totalDeaths), 0);
+    const new_cases = filteredData.reduce((sum, item) => sum + item.newCases, 0);
+    const new_deaths = filteredData.reduce((sum, item) => sum + item.newDeaths, 0);
 
     return {
-      cas_confirmes: filteredData.reduce(
-        (sum, item) => sum + (item?.totalCases ?? 0),
-        0
-      ),
-      deces: filteredData.reduce(
-        (sum, item) => sum + (item?.totalDeaths ?? 0),
-        0
-      ),
-      new_cases: filteredData.reduce(
-        (sum, item) => sum + (item?.newCases ?? 0),
-        0
-      ),
-      new_deaths: filteredData.reduce(
-        (sum, item) => sum + (item?.newDeaths ?? 0),
-        0
-      ),
-      timeline: filteredData,
+      cas_confirmes,
+      deces,
+      new_cases,
+      new_deaths,
+      timeline,
     };
   } catch (error) {
-    console.error(
-      "Erreur lors de la récupération des données de localisation:",
-      error
-    );
+    console.error("Erreur lors de la récupération des données de localisation :", error);
     return {
       cas_confirmes: 0,
       deces: 0,
@@ -224,7 +314,7 @@ export const exportPandemicData = async (pandemicId: number) => {
 };
 
 export const createLocalisation = async (localisation: Localisation) => {
-  const response = await fetch("http://localhost:8081/api/location", {
+  const response = await fetch("http://localhost:8081/api/v1/location", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(localisation),
@@ -233,7 +323,7 @@ export const createLocalisation = async (localisation: Localisation) => {
 };
 
 export const createPandemie = async (pandemie: Pandemie) => {
-  const response = await fetch("http://localhost:8081/api/pandemie", {
+  const response = await fetch("http://localhost:8081/api/v1/pandemie", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(pandemie),
@@ -242,7 +332,7 @@ export const createPandemie = async (pandemie: Pandemie) => {
 };
 
 export const createCalendrier = async (calendrier: Calendrier) => {
-  const response = await fetch("http://localhost:8081/api/calendrier", {
+  const response = await fetch("http://localhost:8081/api/v1/calendrier", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(calendrier),
@@ -252,7 +342,7 @@ export const createCalendrier = async (calendrier: Calendrier) => {
 
 export const deleteData = async (id: number) => {
   try {
-    await api.delete(`/api/data/${id}`);
+    await api.delete(`/api/v1/data/${id}`);
   } catch (error) {
     throw error;
   }
@@ -260,7 +350,7 @@ export const deleteData = async (id: number) => {
 
 export const updateData = async (id: number, data: any) => {
   try {
-    const response = await api.put(`/api/data/${id}`, data);
+    const response = await api.put(`/api/v1/data/${id}`, data);
     return response.data;
   } catch (error) {
     throw error;
@@ -269,7 +359,7 @@ export const updateData = async (id: number, data: any) => {
 
 export const deleteLocalisation = async (id: number) => {
   try {
-    await api.delete(`/api/location/${id}`);
+    await api.delete(`/api/v1/location/${id}`);
   } catch (error) {
     throw error;
   }
@@ -277,7 +367,7 @@ export const deleteLocalisation = async (id: number) => {
 
 export const updateLocalisation = async (id: number, data: any) => {
   try {
-    const response = await api.put(`/api/location/${id}`, data);
+    const response = await api.put(`/api/v1/location/${id}`, data);
     return response.data;
   } catch (error) {
     throw error;
@@ -286,7 +376,7 @@ export const updateLocalisation = async (id: number, data: any) => {
 
 export const deletePandemie = async (id: number) => {
   try {
-    await api.delete(`/api/pandemie/${id}`);
+    await api.delete(`/api/v1/pandemie/${id}`);
   } catch (error) {
     throw error;
   }
@@ -294,7 +384,7 @@ export const deletePandemie = async (id: number) => {
 
 export const updatePandemie = async (id: number, data: any) => {
   try {
-    const response = await api.put(`/api/pandemie/${id}`, data);
+    const response = await api.put(`/api/v1/pandemie/${id}`, data);
     return response.data;
   } catch (error) {
     throw error;
