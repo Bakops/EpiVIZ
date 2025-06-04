@@ -1,7 +1,7 @@
 import axios from "axios";
+import { Calendrier } from "../models/Calendrier";
 import { Localisation } from "../models/Localisation";
 import { Pandemie } from "../models/Pandemie";
-import { Calendrier } from "../models/Calendrier";
 
 const api = axios.create({
   baseURL: "http://localhost:8081/api/v1",
@@ -91,11 +91,14 @@ export const getGlobalData = async (pandemicId: string) => {
     ]);
 
     const allData = Array.isArray(dataResponse.data) ? dataResponse.data : [];
-    const calendars = Array.isArray(calendarResponse.data) ? calendarResponse.data : [];
+    const calendars = Array.isArray(calendarResponse.data)
+      ? calendarResponse.data
+      : [];
 
     // Convertir les calendriers en Map pour accès rapide par id_calendar
     const calendarMap = new Map(
-      calendars.map((cal) => [cal.id, cal.date_value ?? ""]));
+      calendars.map((cal) => [cal.id, cal.date_value ?? ""])
+    );
     console.log("Calendars Map :", calendarMap);
 
     const mappedData = allData.map((item) => ({
@@ -113,8 +116,6 @@ export const getGlobalData = async (pandemicId: string) => {
     const pandemicData = mappedData.filter(
       (item) => item && item.idPandemic === Number(pandemicId)
     );
-
-
 
     const totalCases = pandemicData.reduce(
       (sum, item) => sum + (item.totalCases || 0),
@@ -203,12 +204,16 @@ export const getLocationData = async (
 
   try {
     const [dataResponse, calendarResponse] = await Promise.all([
-      api.get("/data", { params: { id_location: locationId, id_pandemie: pandemicId } }),
+      api.get("/data", {
+        params: { id_location: locationId, id_pandemie: pandemicId },
+      }),
       api.get("/calendar"),
     ]);
 
     const allData = Array.isArray(dataResponse.data) ? dataResponse.data : [];
-    const calendars = Array.isArray(calendarResponse.data) ? calendarResponse.data : [];
+    const calendars = Array.isArray(calendarResponse.data)
+      ? calendarResponse.data
+      : [];
 
     const calendarMap = new Map(
       calendars.map((cal) => [cal.id, cal.date_value ?? ""])
@@ -234,14 +239,17 @@ export const getLocationData = async (
     );
 
     // Construction timeline agrégée par date
-    const timelineMap = new Map<string, {
-      dateValue: string;
-      totalCases: number;
-      totalDeaths: number;
-      newCases: number;
-      newDeaths: number;
-      idCalendar: number;
-    }>();
+    const timelineMap = new Map<
+      string,
+      {
+        dateValue: string;
+        totalCases: number;
+        totalDeaths: number;
+        newCases: number;
+        newDeaths: number;
+        idCalendar: number;
+      }
+    >();
 
     filteredData.forEach((item) => {
       if (!item.dateValue) return;
@@ -267,10 +275,22 @@ export const getLocationData = async (
     const timeline = Array.from(timelineMap.values());
 
     // Calculs globaux
-    const cas_confirmes = filteredData.reduce((max, item) => Math.max(max, item.totalCases), 0);
-    const deces = filteredData.reduce((max, item) => Math.max(max, item.totalDeaths), 0);
-    const new_cases = filteredData.reduce((sum, item) => sum + item.newCases, 0);
-    const new_deaths = filteredData.reduce((sum, item) => sum + item.newDeaths, 0);
+    const cas_confirmes = filteredData.reduce(
+      (max, item) => Math.max(max, item.totalCases),
+      0
+    );
+    const deces = filteredData.reduce(
+      (max, item) => Math.max(max, item.totalDeaths),
+      0
+    );
+    const new_cases = filteredData.reduce(
+      (sum, item) => sum + item.newCases,
+      0
+    );
+    const new_deaths = filteredData.reduce(
+      (sum, item) => sum + item.newDeaths,
+      0
+    );
 
     return {
       cas_confirmes,
@@ -280,7 +300,10 @@ export const getLocationData = async (
       timeline,
     };
   } catch (error) {
-    console.error("Erreur lors de la récupération des données de localisation :", error);
+    console.error(
+      "Erreur lors de la récupération des données de localisation :",
+      error
+    );
     return {
       cas_confirmes: 0,
       deces: 0,

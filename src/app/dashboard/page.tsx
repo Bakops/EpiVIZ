@@ -10,7 +10,6 @@ import {
   getLocationData,
   getPandemics,
 } from "@/services/api";
-import { getPredictions } from "@/services/predict";
 import {
   CategoryScale,
   Chart as ChartJS,
@@ -52,7 +51,6 @@ export default function DashboardPage() {
   const [selectedLocalisation, setSelectedLocalisation] = useState<
     string | null
   >(null);
-
 
   const [localisations, setLocalisations] = useState<any[]>([]);
   const [pandemics, setPandemics] = useState<any[]>([]);
@@ -365,8 +363,9 @@ export default function DashboardPage() {
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `pandemic-data-${selectedPandemic}-${selectedTimeframe}-${new Date().toISOString().split("T")[0]
-      }.json`;
+    a.download = `pandemic-data-${selectedPandemic}-${selectedTimeframe}-${
+      new Date().toISOString().split("T")[0]
+    }.json`;
     document.body.appendChild(a);
     a.click();
     window.URL.revokeObjectURL(url);
