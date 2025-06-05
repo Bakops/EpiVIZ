@@ -1,10 +1,17 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
+type Stats = {
+  cas_confirmes: number | null;
+  deces: number | null;
+  new_cases: number | null;
+  new_deaths: number | null;
+}
+
 type Props = {
-  stats: any;
+  stats: Stats;
   isLoading: boolean;
   selectedLocalisation: string | null;
-  localisations: any[];
+  localisations: { id: string; country?: string; nom?: string }[];
 };
 
 export default function DashboardStatsCards({

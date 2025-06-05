@@ -2,15 +2,30 @@ import PandemicMap from "@/components/pandemic-map";
 import PredictionChart from "@/components/predict-chart";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Line } from "react-chartjs-2";
+import type { ChartData, ChartOptions } from "chart.js";
+
+type Localisation = {
+  id: string;
+  country?: string;
+  nom?: string;
+};
+
+type TimelineItem = {
+  totalCases: number;
+  totalDeaths: number;
+  newCases: number;
+  newDeaths: number;
+  date: string;
+};
 
 type Props = {
-  chartData: any;
-  chartOptions: any;
-  localisations: any[];
+  chartData: ChartData<"line">;
+  chartOptions: ChartOptions<"line">;
+  localisations: Localisation[];
   selectedLocalisation: string | null;
   selectedPandemic: string | null;
-  handleLocationClick: (id: string) => void;
-  timeline: any[];
+  handleLocationClick: (id: string | number | null) => void;
+  timeline: TimelineItem[];
   isLoading: boolean;
 };
 
@@ -46,7 +61,7 @@ export default function DashboardTabs({
         />
       </TabsContent>
       <TabsContent value="predict" className="border rounded-md p-4">
-        <PredictionChart country={selectedLocalisation} />
+        <PredictionChart country={selectedLocalisation ?? ""} />
       </TabsContent>
       <TabsContent value="timeline" className="border rounded-md p-4">
         {timeline && timeline.length > 0 ? (

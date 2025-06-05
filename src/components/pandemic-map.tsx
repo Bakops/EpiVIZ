@@ -41,6 +41,7 @@ interface PandemicMapProps {
   selectedLocationId: string | number | null;
   selectedPandemicId: string | number | null;
   onLocationClick: (id: string | number | null) => void;
+  className?: string;
 }
 
 export default function PandemicMap({
